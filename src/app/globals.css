@@ -1,0 +1,178 @@
+@import "tailwindcss";
+
+/*
+ * XeaCode — design tokens
+ *
+ * Tuned taste-skill dials:
+ *   DESIGN_VARIANCE = 6   (offset/asymmetric, not centered, not chaotic)
+ *   MOTION_INTENSITY = 7  (scroll-driven, spring physics, restraint)
+ *   VISUAL_DENSITY = 3    (airy, gallery-tier negative space)
+ *
+ * Rationale lives in .claude/docs/taste-skill-rules.md.
+ * Dark is the truly-default theme (:root values). `.light` class overrides.
+ */
+
+/* class-strategy dark variant, paired with next-themes attribute="class" */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+  /* Type */
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-geist-sans);
+
+  /* Marquee animations — Tech Stack section.
+     Duration is the seamless-loop cycle. Linear easing for ticker feel.
+     Pair with content duplicated 2× and `width: max-content`. */
+  --animate-marquee-left: marquee-left 50s linear infinite;
+  --animate-marquee-right: marquee-right 50s linear infinite;
+
+  @keyframes marquee-left {
+    from {
+      transform: translate3d(0, 0, 0);
+    }
+    to {
+      transform: translate3d(-50%, 0, 0);
+    }
+  }
+  @keyframes marquee-right {
+    from {
+      transform: translate3d(-50%, 0, 0);
+    }
+    to {
+      transform: translate3d(0, 0, 0);
+    }
+  }
+
+  /* Semantic color tokens — values come from :root / .light below */
+  --color-bg: var(--bg);
+  --color-bg-elevated: var(--bg-elevated);
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-subtle: var(--fg-subtle);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-strong: var(--accent-strong);
+
+  /* Shadows — tinted to background hue */
+  --shadow-soft: var(--shadow-soft-value);
+  --shadow-card: var(--shadow-card-value);
+  --shadow-elevated: var(--shadow-elevated-value);
+
+  /* Spring easings */
+  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+/* Dark theme — default values (no class required) */
+:root {
+  /* Off-black with subtle cool undertone — NEVER pure #000 */
+  --bg: oklch(0.16 0.005 250);
+  --bg-elevated: oklch(0.20 0.005 250);
+  --fg: oklch(0.96 0.005 250);
+  --fg-muted: oklch(0.74 0.01 250);
+  --fg-subtle: oklch(0.62 0.008 250);  /* WCAG 4.5:1 on bg */
+  --border: oklch(0.26 0.01 250);
+  --border-strong: oklch(0.36 0.01 250);
+
+  /* Accent: desaturated emerald (locked decision) */
+  --accent: oklch(0.66 0.13 165);
+  --accent-soft: oklch(0.66 0.13 165 / 0.18);
+  --accent-strong: oklch(0.72 0.14 165);
+
+  /* Inner-highlight + tinted drop shadows (no neon glow) */
+  --shadow-soft-value:
+    0 1px 0 0 oklch(1 0 0 / 0.04) inset,
+    0 8px 32px -12px oklch(0 0 0 / 0.5);
+  --shadow-card-value:
+    0 1px 0 0 oklch(1 0 0 / 0.05) inset,
+    0 20px 40px -15px oklch(0 0 0 / 0.6);
+  --shadow-elevated-value:
+    0 1px 0 0 oklch(1 0 0 / 0.06) inset,
+    0 30px 60px -20px oklch(0 0 0 / 0.7);
+
+  color-scheme: dark;
+}
+
+/* Light theme — warm off-white, deep charcoal, never pure white/black */
+.light {
+  --bg: oklch(0.985 0.003 85);
+  --bg-elevated: oklch(1 0 0);
+  --fg: oklch(0.18 0.01 250);
+  --fg-muted: oklch(0.38 0.01 250);
+  --fg-subtle: oklch(0.48 0.008 250);  /* WCAG 4.5:1 on bg */
+  --border: oklch(0.88 0.005 250);
+  --border-strong: oklch(0.78 0.005 250);
+
+  --accent: oklch(0.55 0.13 165);
+  --accent-soft: oklch(0.55 0.13 165 / 0.12);
+  --accent-strong: oklch(0.48 0.14 165);
+
+  --shadow-soft-value:
+    0 1px 0 0 oklch(0 0 0 / 0.03) inset,
+    0 8px 32px -12px oklch(0 0 0 / 0.08);
+  --shadow-card-value:
+    0 1px 0 0 oklch(0 0 0 / 0.04) inset,
+    0 20px 40px -15px oklch(0 0 0 / 0.12);
+  --shadow-elevated-value:
+    0 1px 0 0 oklch(0 0 0 / 0.05) inset,
+    0 30px 60px -20px oklch(0 0 0 / 0.18);
+
+  color-scheme: light;
+}
+
+@layer base {
+  html {
+    /* Anchor smooth-scroll; overridden by prefers-reduced-motion below */
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Selection — emerald wash */
+  ::selection {
+    background-color: var(--accent-soft);
+    color: var(--fg);
+  }
+
+  /* Focus rings — accent, generous offset for breathable hit areas */
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  /* Headings — display weight + tight tracking per taste-skill */
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+}
+
+/*
+ * Reduced-motion fallback — every animation collapses to ~instant.
+ * Required by the brief + the taste-skill pre-flight check.
+ */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

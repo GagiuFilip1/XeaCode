@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git clone *)",
+      "Bash(mkdir -p ~/.claude/plans)",
+      "Read(//c/Users/Gagiu/.claude/plans/**)",
+      "Bash(python -c ' *)",
+      "Bash(dir E:\\\\Projects\\\\Personal\\\\XeaCode\\\\.claude\\\\docs\\\\screenshots)",
+      "Bash(del /Q \"E:\\\\Projects\\\\Personal\\\\XeaCode\\\\messages\\\\ro.json\")",
+      "Bash(del /Q \"E:\\\\Projects\\\\Personal\\\\XeaCode\\\\src\\\\components\\\\layout\\\\LocaleSwitcher.tsx\")",
+      "Bash(del /Q \"E:\\\\Projects\\\\Personal\\\\XeaCode\\\\src\\\\i18n\\\\routing.ts\")",
+      "Bash(del /Q \"E:\\\\Projects\\\\Personal\\\\XeaCode\\\\src\\\\i18n\\\\navigation.ts\")",
+      "Bash(del /Q \"E:\\\\Projects\\\\Personal\\\\XeaCode\\\\src\\\\proxy.ts\")"
+    ]
+  }
+}

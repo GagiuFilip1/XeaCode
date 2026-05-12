@@ -1,0 +1,214 @@
+{
+  "header": {
+    "nav": {
+      "services": "Services",
+      "process": "Process",
+      "work": "Work",
+      "tech": "Stack",
+      "team": "Team",
+      "faq": "FAQ",
+      "contact": "Contact"
+    },
+    "themeToggleAriaLight": "Switch to light theme",
+    "themeToggleAriaDark": "Switch to dark theme",
+    "mobileMenuOpen": "Open menu",
+    "mobileMenuClose": "Close menu",
+    "logoAria": "XeaCode home"
+  },
+  "hero": {
+    "eyebrow": "Independent studio",
+    "headline": "A small studio. Built by senior engineers.",
+    "subtitle": "We build production software for B2B teams in Europe — from a founder shipping a first product, to a small operator company hiring a build out, to a platform team that needs senior reinforcement. Next.js front-ends, .NET back-ends, and the architecture work that rarely fits in a plan. First working code in week one. Most products in production within two months.",
+    "trustStrip": "60+ years of senior engineering · NDA-only client list · One working day reply · EU + RO",
+    "ctaPrimary": "Start a conversation",
+    "ctaSecondary": "See how we work"
+  },
+  "services": {
+    "title": "What we build",
+    "subtitle": "Four shapes of work for a small senior development team. Every engagement is owned end-to-end by the engineer who writes the code — no juniors delegated, no offshore handoff, no agency sales layer in front of the people doing the work. Mutual NDA is the default.",
+    "1": {
+      "title": "Product engineering",
+      "description": "An idea, a Figma, or a half-built prototype turned into a product real customers pay for. Recent shape: a B2B scheduling tool taken from empty repo to paying customers in seven weeks, two engineers, weekly demos on Friday. We build, iterate, and harden the codebase so it survives the Series A audit, not just the demo.",
+      "engagement": "4–8 weeks · two engineers embedded"
+    },
+    "2": {
+      "title": "Platform & systems",
+      "description": "The backend systems, integrations, and APIs your product depends on but users never see. Recent shape: replacing a brittle order-sync between three vendors with a single typed event pipeline, p95 down from 1.4s to 180ms. Code written to be read in two years, not rewritten.",
+      "engagement": "3–6 weeks · one to two engineers"
+    },
+    "3": {
+      "title": "Architecture consulting",
+      "description": "One senior architect in the room for the decisions that compound. Stack choice, system boundaries, build-versus-buy calls, technical due diligence on a codebase you're about to acquire. Three weeks of clear architecture beats six months of cleanup. One senior brain instead of three mediocre ones.",
+      "engagement": "2–4 weeks · one architect"
+    },
+    "4": {
+      "title": "Embedded engineering",
+      "description": "One or two senior engineers embedded inside your team for a fixed window — the staff augmentation alternative when you want people you'd still hire on month nine. They join your standups, your codebase, your repo. Same engineers from week one to handover; no rotating bench, no surprise replacement.",
+      "engagement": "1–2 engineers · 4–12 week window"
+    }
+  },
+  "process": {
+    "title": "How we work",
+    "subtitle": "Four steps from a first call to a finished handover, run by the same senior Next.js + .NET team the whole way. Weekly demos on Friday, written artifacts at every step, no agency layer between you and the people writing the code. The cadence is half what a larger shop quotes for the same scope.",
+    "1": {
+      "title": "Discovery",
+      "description": "Discovery produces a written plan, not a sales deck. One or two engineers (the ones who'll write the code) sit with you for one to two weeks of scoping the system, the constraints, the failure modes, and the unknowns worth de-risking before commitment. We share a working doc you can read in a day, with calls on Tuesday and Friday and async writing between. By the close, you have an architecture brief solid enough to walk away with — and a clear handoff into step two.",
+      "deliverable": "Written architecture brief, ~10 pages"
+    },
+    "2": {
+      "title": "Architecture",
+      "description": "Architecture nails down the early decisions that make every later month cheaper. We pick the stack, draw the system boundaries, mark the seams where the system is allowed to change, and write down what we're not building. The same engineers who ran discovery do this work, plus a second senior reviewing the boundaries — closer to technical due diligence than to a workshop. You leave with a stack-decision doc and a system-boundary map that survives a year of pressure, not a slide deck that survives a quarter.",
+      "deliverable": "Stack decision doc + system-boundary map"
+    },
+    "3": {
+      "title": "Build",
+      "description": "Build is iterative, weekly, and on a public branch you can read. Working code in week one — not a deployment story, an actual feature you can click. Every Friday we ship a demo on a staging URL and write a short note covering what landed, what slipped, and what's next. The same engineers who scoped and architected the system write every line of production code. No silent stretches, no late-stage pivots, no surprise reveals at month three.",
+      "deliverable": "Weekly demo + staging deploy on Friday"
+    },
+    "4": {
+      "title": "Handover",
+      "description": "Handover is written for the engineer who arrives after us, not for an internal handoff doc nobody reads. We leave a runbook covering deploy, rollback, and the three things most likely to break at 2am, architecture notes that explain why each non-obvious decision is the way it is, and a 90-minute live Q&A session with your team where every question is fair game. When we step back, your people keep going — no dependency on us, no key-person risk on our side either.",
+      "deliverable": "Runbook + architecture notes + 90-min Q&A session"
+    }
+  },
+  "work": {
+    "title": "Selected work",
+    "subtitle": "Three recent engagements, anonymized — every client list is under NDA. Specificity here is the proof: industry, stack, role, timeline, outcome. Names withheld; shapes intact.",
+    "1": {
+      "title": "[NEEDS USER INPUT — anonymized work title, e.g., 'Order-management rebuild — EU mid-market e-commerce']",
+      "body": "[NEEDS USER INPUT — 2 sentences, ~40-60 words. What the system does, what you owned, scope of work.]",
+      "stack": "[NEEDS USER INPUT — pipe-separated, e.g., 'Next.js|.NET 8|PostgreSQL|Azure']",
+      "meta": "[NEEDS USER INPUT — e.g., '11 weeks · architecture + build · 2 engineers embedded']",
+      "outcome": "[NEEDS USER INPUT — one sentence, italic-styled. Quantified if honest, e.g., 'Cutover with zero order loss; p95 down from 1.4s to 180ms.']"
+    },
+    "2": {
+      "title": "[NEEDS USER INPUT — anonymized work title]",
+      "body": "[NEEDS USER INPUT — 2 sentences, ~40-60 words]",
+      "stack": "[NEEDS USER INPUT — pipe-separated stack]",
+      "meta": "[NEEDS USER INPUT — timeline + role + team]",
+      "outcome": "[NEEDS USER INPUT — outcome line]"
+    },
+    "3": {
+      "title": "[NEEDS USER INPUT — anonymized work title]",
+      "body": "[NEEDS USER INPUT — 2 sentences, ~40-60 words]",
+      "stack": "[NEEDS USER INPUT — pipe-separated stack]",
+      "meta": "[NEEDS USER INPUT — timeline + role + team]",
+      "outcome": "[NEEDS USER INPUT — outcome line]"
+    }
+  },
+  "tech": {
+    "title": "Stack we use",
+    "subtitle": "Modern, boring tools we trust in production. The same senior Next.js + .NET team, the same stack across projects — so we get faster every engagement instead of relearning fundamentals, and your auditors recognize the code in two years. Alongside it, we use the current generation of AI-assisted developer tooling heavily, which is how the timelines on this page are honest.",
+    "scopeNote": "We extend or rebuild systems on Next.js, .NET, and the infrastructure around them. Different stacks (Rails, Django, PHP) we politely pass on.",
+    "categories": {
+      "1": "Frontend & product",
+      "2": "Backend & platform",
+      "3": "Infrastructure & DX"
+    }
+  },
+  "team": {
+    "title": "Who we are",
+    "subtitle": "A small studio of senior engineers who ship production software end-to-end. We work directly with the people who own the outcome, not through a sales layer.",
+    "stats": "Five engineers · EU + RO timezones · NDA-only client list · One working day reply",
+    "body": {
+      "1": "Five senior engineers, each with a decade or more of production work behind them. We left larger teams to do the job without the layers in between. The studio is deliberately small, growing carefully to seven or eight, never faster than we can vouch for the next hire.",
+      "2": "No junior delegation. The engineer you meet on the discovery call writes the code. No offshore subcontracting, no white-labeled teams in another timezone. No agency sales layer between you and the people doing the work. What you scope is what gets built, by the people who scoped it.",
+      "3": "We hold to three things: code that survives the next audit by an engineer we've never met, plain-English communication on what's done and what's blocked, and a predictable weekly cadence so you always know where the project stands. Sixty-plus years of senior engineering on the table."
+    },
+    "principles": {
+      "1": {
+        "label": "01 · Seniors only.",
+        "body": "Every line of code written by the engineer who will defend it in review six months later."
+      },
+      "2": {
+        "label": "02 · Read first, write second.",
+        "body": "Two weeks of scoping beats two months of rebuilding. We read the problem before we touch the keyboard."
+      },
+      "3": {
+        "label": "03 · Boring tools.",
+        "body": "Same stack across projects. We get faster with each engagement instead of relearning fundamentals on your budget."
+      },
+      "4": {
+        "label": "04 · NDA by default.",
+        "body": "Your work stays your work. Mutual NDA signed before discovery. No case studies, no logos, no name-dropping."
+      }
+    }
+  },
+  "faq": {
+    "title": "Common questions",
+    "subtitle": "The questions buyers actually ask before signing. Cost, timing, what happens if it doesn't work out, how we handle continuity. Direct answers below.",
+    "1": {
+      "q": "What does a typical engagement cost?",
+      "a": "Two shapes. Embedded retainers, multiple engineers across 4–12 weeks, start around [NEEDS USER INPUT — embedded retainer band] per month. Fixed-bid product builds start around [NEEDS USER INPUT — fixed-bid start]. Discovery is free and gives you the written plan whether you continue with us or not."
+    },
+    "2": {
+      "q": "How long until I see something working?",
+      "a": "Working code in week one or two, not a slide deck. Friday demos every week, no silent stretches between them. Most product builds land in four to eight weeks end-to-end, roughly half the timeline of a typical agency engagement."
+    },
+    "3": {
+      "q": "What if we don't gel after the first weeks?",
+      "a": "Discovery is a separate signed engagement. You walk away with the full written architecture brief, scope, and estimates, with no further commitment. The plan itself is the deliverable, so you keep value either way. That is the risk reversal."
+    },
+    "4": {
+      "q": "Do you sign NDAs?",
+      "a": "Yes, mutual NDA before the discovery call. Standard practice for every engagement. Our entire client list is under NDA, which is why you will not see logos or case studies on this site. We expect the same protection for your work."
+    },
+    "5": {
+      "q": "Can you join our standups and timezone?",
+      "a": "We work EU and Romania hours. Full overlap with London, Berlin, and Stockholm. Comfortable overlap with Eastern US through the afternoon. Asynchronous-first by default, but live standups are fine when they help. We adapt to your cadence, not the other way around."
+    },
+    "6": {
+      "q": "What stack do you cover?",
+      "a": "Production Next.js, .NET, and the infrastructure around them. We deliberately do not take on Rails, Django, or PHP rewrites. Staying narrow is how we stay fast and senior across the team, instead of stretching thin to cover every framework on the market."
+    },
+    "7": {
+      "q": "What if a key engineer leaves mid-project?",
+      "a": "Continuity is staffed, not hoped for. Two engineers on every project from week one, so there is no single-person bus factor. A written architecture brief lands by week three, readable in a day by any senior engineer. Knowledge lives in the documents, not in one head."
+    }
+  },
+  "contact": {
+    "title": "Tell us about it",
+    "subtitle": "Tell us what you're building — a one-paragraph note is enough. You come back to a real engineer within one working day, not a sales pipeline. We read every note, we reply to every note, and we say so if the work isn't a fit.",
+    "preformNote": "Discovery starts free. Walk away with the written plan after discovery, no further commitment. Reply within one working day.",
+    "form": {
+      "name": "Name",
+      "namePlaceholder": "Your name",
+      "email": "Email",
+      "emailPlaceholder": "you@company.com",
+      "company": "Company or team",
+      "companyPlaceholder": "Optional",
+      "message": "What are you building?",
+      "messagePlaceholder": "Short context: stage, stack, timeline.",
+      "submit": "Send message",
+      "submitting": "Sending...",
+      "successTitle": "Got it.",
+      "successMessage": "We have your note. Expect a reply within one working day, from a real engineer, not a sales funnel.",
+      "errorTitle": "Something went wrong.",
+      "errorMessage": "The form didn't send. Try again, or write to us directly at hello@xeacode.com.",
+      "validationRequired": "This field is required",
+      "validationEmail": "Enter a valid email"
+    },
+    "details": {
+      "emailLabel": "Write to us",
+      "socialsLabel": "Find us online",
+      "calendarLabel": "Book a call"
+    }
+  },
+  "footer": {
+    "tagline": "A small studio for serious software.",
+    "quickLinksLabel": "QUICK LINKS",
+    "socialsLabel": "ELSEWHERE",
+    "easterEgg": "Built with quiet supervision.",
+    "copyright": "XeaCode. All rights reserved.",
+    "themeIndicatorDark": "DARK MODE",
+    "themeIndicatorLight": "LIGHT MODE"
+  },
+  "common": {
+    "skipToMain": "Skip to main content",
+    "loading": "Loading..."
+  },
+  "metadata": {
+    "title": "Boutique Software Development Studio | XeaCode",
+    "description": "Senior independent software studio in Europe. Next.js, React, and .NET engineering for B2B teams who want direct collaboration, not hand-offs. Talk to us."
+  }
+}
