@@ -1,25 +1,23 @@
-"use client";
-
 import { useTranslations } from "next-intl";
-import { GithubLogo, LinkedinLogo, XLogo } from "@phosphor-icons/react";
+import { GithubLogo, LinkedinLogo, XLogo } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
-import { useTheme } from "@/components/theme/ThemeProvider";
-import { Paw } from "@/components/icons/Paw";
 import { cn } from "@/lib/cn";
 
 /**
  * Footer — sits below </main>. Uses `<footer>` (NOT `<section>`), no id.
  *
- * Client Component because:
- * - `useTheme()` for the theme-indicator caption.
- * - `new Date().getFullYear()` rendered at render time (dynamic, not in messages).
+ * RSC per Phase 3 design handoff: no dynamic year, no theme indicator,
+ * no easter-egg paw, no client state. Static copy from messages.footer.*.
  *
- * Three-column layout at lg+ (brand / quick links / socials), stacked on mobile.
- * Bottom row separated by a top border, holds dynamic year + theme indicator.
- * Easter egg line is the last full-width row, centered, holds paw SVG #2.
+ * Three-column layout at md+ (brand+tagline / STUDIO links / ELSEWHERE socials+email),
+ * stacked on mobile. Bottom row separated by a top border, holds the
+ * static "© 2019–2026 XEACODE SRL · BUCHAREST, ROMANIA" copy on the left
+ * and "INDEPENDENT SINCE 2019" on the right.
+ *
+ * Phosphor icons imported from `/dist/ssr` so the file stays RSC.
  */
 
-const QUICK_LINKS = ["services", "process", "tech", "contact"] as const;
+const STUDIO_LINKS = ["services", "process", "work", "team"] as const;
 
 const SOCIALS = [
   { Icon: GithubLogo, label: "GitHub" },
@@ -30,39 +28,35 @@ const SOCIALS = [
 export function Footer() {
   const tFooter = useTranslations("footer");
   const tHeader = useTranslations("header");
-  const { theme } = useTheme();
-
-  const year = new Date().getFullYear();
-  const themeLabel =
-    theme === "light"
-      ? tFooter("themeIndicatorLight")
-      : tFooter("themeIndicatorDark");
 
   return (
     <footer className="border-t border-border bg-bg">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 md:py-20">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-[clamp(64px,10vw,96px)] pb-16">
         {/* 3-col block */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-16 mb-12 md:mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-16 mb-14">
           {/* Brand */}
-          <div className="flex flex-col gap-3 max-w-sm">
+          <div className="flex flex-col gap-3">
             <Link
               href="/"
               className="font-display text-base font-medium tracking-tight text-fg hover:text-accent transition-colors w-fit"
             >
               XeaCode
             </Link>
-            <p className="text-sm text-fg-muted leading-relaxed">
+            <p className="text-sm text-fg-muted leading-relaxed max-w-[32ch]">
               {tFooter("tagline")}
             </p>
           </div>
 
-          {/* Quick links */}
-          <nav aria-label="footer-quick-links" className="flex flex-col gap-3">
+          {/* STUDIO links */}
+          <nav
+            aria-label="Footer studio links"
+            className="flex flex-col gap-3"
+          >
             <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-fg-subtle">
-              {tFooter("quickLinksLabel")}
+              {tFooter("studioLabel")}
             </span>
             <ul className="flex flex-col gap-2">
-              {QUICK_LINKS.map((key) => (
+              {STUDIO_LINKS.map((key) => (
                 <li key={key}>
                   <a
                     href={`#${key}`}
@@ -75,10 +69,10 @@ export function Footer() {
             </ul>
           </nav>
 
-          {/* Socials */}
+          {/* ELSEWHERE — socials + email */}
           <div className="flex flex-col gap-3">
             <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-fg-subtle">
-              {tFooter("socialsLabel")}
+              {tFooter("elsewhereLabel")}
             </span>
             <ul className="flex items-center gap-3">
               {SOCIALS.map(({ Icon, label }) => (
@@ -97,29 +91,26 @@ export function Footer() {
                 </li>
               ))}
             </ul>
+            <a
+              href={`mailto:${tFooter("emailValue")}`}
+              className="text-sm text-fg hover:text-accent transition-colors w-fit"
+            >
+              {tFooter("emailValue")}
+            </a>
           </div>
         </div>
 
-        {/* Bottom row — copyright + theme indicator */}
+        {/* Bottom row — copyright + independent-since meta */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pt-8 border-t border-border">
           <p className="text-xs font-mono text-fg-subtle">
-            <span>© {year}</span>
-            <span aria-hidden className="mx-2 opacity-50">·</span>
             <span>{tFooter("copyright")}</span>
+            <span aria-hidden className="mx-2 opacity-50">/</span>
+            <span>{tFooter("location")}</span>
           </p>
           <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-fg-subtle">
-            {themeLabel}
+            {tFooter("independentSince")}
           </p>
         </div>
-
-        {/* Easter-egg line — centered, paw SVG #2 sits inline at the end */}
-        <p className="mt-8 text-center text-xs font-mono text-fg-subtle">
-          {tFooter("easterEgg")}
-          <Paw
-            className="inline-block ml-1.5 align-[-3px] text-fg-subtle/80"
-            size={12}
-          />
-        </p>
       </div>
     </footer>
   );

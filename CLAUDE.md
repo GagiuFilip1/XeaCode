@@ -1,26 +1,22 @@
 # Claude project instructions
 
-This file is the standing instruction set: **how you work in any project that adopts it**. It is project-portable — the workflow rules, subagent strategy, phase lifecycle, and lessons-capture discipline below are reusable across projects.
+This file is the standing instruction set: **how you work in any project that adopts it**. It is project-portable — the workflow rules, subagent strategy, PM handoff, and memory-promotion discipline below are reusable across projects.
 
 **Project-specific context (project layout, build/test commands, gotchas, architecture rules, scope) lives in [`PROJECT.md`](PROJECT.md).** Read it before answering any question that involves architecture, file placement, commands, or project conventions.
 
 For ongoing project state, read:
 
 - **[README.md](README.md)** — canonical reference for system inventory, component APIs, architecture diagram, JSON schemas. Read before answering "what exists?".
-- **[`.claude/docs/STATE.md`](.claude/docs/STATE.md)** — the ONE active board story (phase status, test count, scope, AC, DoD). Read at session start to know what is being worked on right now.
-- **[`.claude/docs/COMPLETED.md`](.claude/docs/COMPLETED.md)** — reverse-chronological log of shipped work as one-liners. Read when you need to know what was already done.
-- **[`.claude/docs/lessons.md`](.claude/docs/lessons.md)** — codebase-specific corrections from past sessions. Review before non-trivial work.
+- **[`.claude/docs/STATE.md`](.claude/docs/STATE.md)** — at most ONE task, written by the `Senior Project Manager` subagent when the user requests an end-of-day handoff. Read at session start; if empty, no pre-queued work — wait for the user's first request.
 
 ## Bootstrap (fresh project / missing docs)
 
-On session start, if `.claude/docs/` does not exist (or any of `STATE.md` / `COMPLETED.md` / `lessons.md` / `todo.md` inside it is missing), **offer to scaffold the missing files with their canonical headers** and wait for explicit user confirmation before creating anything. Do not silently create files — some projects may not yet have adopted this workflow.
+On session start, if `.claude/docs/` does not exist (or `STATE.md` / `todo.md` inside it is missing), **offer to scaffold the missing files with their canonical headers** and wait for explicit user confirmation before creating anything. Do not silently create files — some projects may not yet have adopted this workflow.
 
 The canonical headers (used only when scaffolding):
 
-- `STATE.md` — `# Project State\n\n> The ONE active board story. Completed work moves to COMPLETED.md.\n`
-- `COMPLETED.md` — `# Completed Work\n\nReverse-chronological log of shipped work. One-liners only — full detail belongs in plan documents and commit history.\n`
-- `lessons.md` — `# Lessons Learned\n\nPatterns and corrections captured during development. Review at session start.\n`
-- `todo.md` — `# Task Tracking\n\nGranular checklists for the **active** phase.\n`
+- `STATE.md` — `# Next task\n\n> Written only by the Senior Project Manager subagent on user request. At most one task. Empty otherwise.\n\n_No task queued._\n`
+- `todo.md` — `# Task Tracking\n\nGranular checklist for the **active** task.\n`
 
 ---
 
@@ -35,30 +31,38 @@ The canonical headers (used only when scaffolding):
 - Use plan mode for verification steps too, not just building (e.g. "run these tests, inspect this log, check this scene").
 - If something goes sideways mid-execution, STOP and re-plan immediately — don't keep pushing through.
 - Write detailed specs upfront to reduce ambiguity.
+- **Plan files live at `.claude/plans/<slug>.md`** (project-local — visible to git, discoverable by future you / a reviewer). If the harness writes the initial plan to a global path, `Read` it after `ExitPlanMode` and `Write` it to `.claude/plans/` before starting implementation.
+- **After implementation is fully complete + verified (lint + build green, any browser / runtime checks passed), DELETE the plan file.** The code and commit history become the source of truth from that point on; the plan was scratch space for alignment.
 
 ## 2. Subagent Strategy — USE CUSTOM AGENTS HEAVILY
 
-- **Every plan must explicitly identify which custom agents will execute parts of it.** This is non-negotiable and the user will check.
-- Browse the available custom agents at the start of every non-trivial task and pick the best matches. Don't default to doing it all in the main loop.
+- **Default to using custom agents heavily — for BOTH planning AND implementation.** The main loop is for orchestration: route the work to specialist agents (e.g. `Frontend Developer` writes the React component, `Senior Developer` builds the Laravel/Livewire feature, `Backend Architect` ships the C# service, `Rapid Prototyper` spins the MVP), then verify and integrate the results. Don't default to writing the code yourself.
+- **Every plan must propose specific agents** for the work, inside the plan doc. Suggest, don't decide: phrase it as "the best custom agents would be X, Y, Z" and wait for user confirmation before dispatching.
+- **If you think the task is small enough that no agent is needed, say so explicitly and ASK** before skipping. Don't unilaterally decide a task is "too simple" for an agent — the user has the final word on every plan, including the no-agent path.
 - Offload research, exploration, parallel analysis to subagents — keep the main context window clean.
 - For complex problems, throw more compute at them via parallel subagents (one tool message, multiple agent calls).
 - One task per subagent, focused execution.
 - Common picks (refine per project — see [PROJECT.md](PROJECT.md) for project-specific subagent recommendations):
-  - `Senior Project Manager` — authors the `STATE.md` board story at the start of every new phase / substantial feature (see "Phase Lifecycle" section below)
+  - `Senior Project Manager` — overwrites `STATE.md` with the ONE next task when the user explicitly asks for a handoff (e.g. "prep tomorrow's task", "queue this for next session"). NOT triggered automatically — see "PM handoff" section below.
   - `Explore` — broad codebase research and "where is X defined?"
   - `Plan` — implementation strategy before coding
+  - `Frontend Developer` — React / Vue / Angular / TS-heavy UI implementation
+  - `Senior Developer` — premium implementation work (Laravel / Livewire / advanced CSS / Three.js)
+  - `Mobile App Builder` — native iOS/Android + cross-platform implementation
+  - `Rapid Prototyper` — fast MVP / proof-of-concept implementation
+  - `Backend Architect` — scalable server-side / microservices / cloud implementation
+  - `AI Engineer` — ML model dev, deployment, intelligent feature integration
   - `Code Reviewer` — independent second-opinion review of diffs
   - `Software Architect` — system-design and architectural-decision questions
   - `Test Results Analyzer` — diagnosing test failures and coverage gaps
-  - `Backend Architect` — Core/Infrastructure C# implementation work
   - `Refactor`-style agents (`Senior Developer`, `Code Reviewer`) — reviewing changes before commit
 
 ## 3. Self-Improvement Loop
 
-- After ANY correction from the user: update `.claude/docs/lessons.md` with the pattern.
-- Write rules for yourself that prevent the same mistake.
-- Ruthlessly iterate on these lessons until mistake rate drops.
-- Review lessons at session start for relevant project context.
+- After ANY correction from the user: capture the pattern in auto-memory (MEMORY.md) via `/si:remember` if it's a fact, or by editing the relevant memory file directly. The harness auto-loads MEMORY.md so the next session sees it.
+- If the correction is an enforced rule (not a one-off observation), graduate it to `CLAUDE.md` (workflow) or `PROJECT.md` (project-specific) or `.claude/rules/<topic>.md` (path-scoped) via `/si:promote`.
+- Same gotcha in 2+ sessions → promotion candidate. Graduate it.
+- The legacy `.claude/docs/lessons.md` is archived (`lessons-archive.md`) — do NOT add new entries there. See §3a below for the canonical knowledge sinks.
 
 ## 3a. Memory & Promotion (self-improving-agent skill)
 
@@ -76,15 +80,14 @@ curating Claude's auto-memory into durable project knowledge:
 | Sink | Owner | Scope | When to use |
 |---|---|---|---|
 | `MEMORY.md` (auto) | Claude (auto) | Project, NOT checked in | Background observations — auto-captured |
-| `.claude/docs/lessons.md` | You + me (manual) | Project, checked in | Curated corrections with narrative ("why we don't do X") |
 | `CLAUDE.md` | You + me (manual, or `/si:promote`) | Project, checked in | Enforced workflow rules every session loads |
 | `PROJECT.md` | You + me (manual) | Project, checked in | Enforced project-specific rules (layout, commands, gotchas) |
 | `.claude/rules/<topic>.md` | You + me (or `/si:promote --target rules/...`) | Path-scoped, checked in | Rules that only apply to specific files |
 
 ### Workflow integration
 
-- After a phase ships (Phase Lifecycle step 6): run `/si:review` to surface anything auto-memory caught that's ripe for promotion.
-- When you correct me on something I should never forget: capture in `.claude/docs/lessons.md` as today, AND if it's an enforced rule, propose `/si:promote` to `CLAUDE.md` (workflow) or `PROJECT.md` (project-specific).
+- After a meaningful chunk of work ships (PR merged, feature deployed, or end-of-day natural break): run `/si:review` to surface anything auto-memory caught that's ripe for promotion.
+- When you correct me on something I should never forget: capture in MEMORY.md via `/si:remember` (or direct edit). If it's an enforced rule, propose `/si:promote` to `CLAUDE.md` (workflow) or `PROJECT.md` (project-specific) or `.claude/rules/<topic>.md` (path-scoped).
 - Same gotcha in 2+ sessions → it's a promotion candidate. Graduate it.
 - Path-scoped patterns (e.g., "all `EntityNode` subclasses must add behaviors before `base._Ready()`") that ONLY apply to certain file types belong in `.claude/rules/`, not the top-level docs, so they only load when relevant.
 
@@ -117,7 +120,7 @@ The `superpowers@claude-plugins-official` plugin (v5.1.0, community, Jesse Vince
 
 ### Use Superpowers skills for:
 - **`brainstorming`** — invoke BEFORE entering plan mode for non-trivial features. Sits *upstream* of CLAUDE.md §1, never replaces it. Its output feeds into the Plan subagent / `.claude/docs/todo.md`.
-- **`systematic-debugging`** — use after the first failed fix attempt. Codifies the root-cause discipline §6 demands but doesn't structure.
+- **`systematic-debugging`** — ALWAYS use for debugging tasks. Fire it the moment you encounter any bug, test failure, unexpected behaviour, build failure, or performance issue — before proposing any fix. The skill enforces root-cause-first discipline and prevents guess-and-check thrashing. This supersedes §6 ("Autonomous Bug Fixing") in HOW you investigate; §6 still governs that you don't ask for hand-holding.
 - **`test-driven-development`** — apply ONLY where xUnit-style unit tests are feasible. Game-engine integration layers (see [PROJECT.md](PROJECT.md) for which folders qualify) are exempt because they can't run in isolated unit tests.
 - **`verification-before-completion`** — reinforces §4. Let it fire.
 
@@ -128,17 +131,17 @@ The `superpowers@claude-plugins-official` plugin (v5.1.0, community, Jesse Vince
 | `requesting-code-review`, `receiving-code-review`, `subagent-driven-development` | `Code Reviewer` custom subagent + `/review` + `/ultrareview` |
 | `writing-skills` | `anthropic-skills:skill-creator` and `/si:extract` |
 | `dispatching-parallel-agents` | Already mandated by §2 — redundant framing |
-| `finishing-a-development-branch` | Phase Lifecycle "On phase completion" checklist |
+| `finishing-a-development-branch` | Plan-mode cleanup (§1 plan-file deletion) + optionally invoking the PM agent to queue the next task |
 | `using-git-worktrees` | `Plan` / agent `isolation: "worktree"` parameter when wanted |
 
 ### Precedence when rituals conflict:
 1. CLAUDE.md §1 (plan mode mandatory) is final. Brainstorming feeds into it, not around it.
 2. CLAUDE.md §2 (custom subagent strategy) wins over Superpowers' subagent skills.
-3. Phase Lifecycle (Senior Project Manager authors `STATE.md`) is unchanged.
+3. PM handoff is opt-in only (see "When to invoke the Senior Project Manager subagent" below). Superpowers' planning skills do not flip that to auto-invoke.
 4. `self-improving-agent` (§3a) and Superpowers operate independently — `/si:*` commands and Superpowers skills do not compete.
 
 ### Trial period:
-Run for the next phase after the active `STATE.md` board story closes. If rituals fight existing workflow, uninstall via `/plugin uninstall superpowers@claude-plugins-official`. Capture findings in `.claude/docs/lessons.md` either way.
+Run for the next handoff cycle (next time the PM agent queues a task in `STATE.md`, or the next user-driven chunk of work if no handoff). If rituals fight existing workflow, uninstall via `/plugin uninstall superpowers@claude-plugins-official`. Capture findings in MEMORY.md via `/si:remember` either way.
 
 ---
 
@@ -149,88 +152,43 @@ Run for the next phase after the active `STATE.md` board story closes. If ritual
 3. **Track Progress** — mark items complete as you go.
 4. **Explain Changes** — high-level summary at each step.
 5. **Document Results** — add a review section to `.claude/docs/todo.md` when done.
-6. **Capture Lessons** — update `.claude/docs/lessons.md` after corrections.
+6. **Capture Corrections** — after any user correction, capture in MEMORY.md (via `/si:remember` or direct edit). If it's a rule that should fire across sessions, propose `/si:promote` to CLAUDE.md / PROJECT.md / `.claude/rules/`.
 
 ---
 
-# Phase Lifecycle (board story workflow)
+# PM handoff (STATE.md)
 
-[`.claude/docs/STATE.md`](.claude/docs/STATE.md) holds **one** active board story at a time. New phases and substantial features get a PM-produced story written there; finished work moves to [`.claude/docs/COMPLETED.md`](.claude/docs/COMPLETED.md). This keeps cold-start sessions oriented in seconds.
+[`.claude/docs/STATE.md`](.claude/docs/STATE.md) holds **at most one task** — the next thing the next Claude Code session should pick up. It is written exclusively by the `Senior Project Manager` subagent, exclusively when the user asks for it.
 
 ## When to invoke the Senior Project Manager subagent
 
-**Use `Senior Project Manager` to author/refresh `STATE.md` whenever you start:**
-- A new numbered phase (e.g., Phase 7, Phase 8).
-- A substantial cross-cutting feature (multi-file scope, multi-day effort, multiple AC).
-- Anything else where a new contributor would benefit from a board-shaped Summary / Context / Scope / AC / DoD spec.
+**Only when the user explicitly asks for it.** Examples of explicit asks:
 
-**Do NOT invoke it for:**
-- Single-file bug fixes, typo corrections, dependency bumps.
-- Follow-up tweaks within a phase that's already in flight.
-- Pure research / exploration tasks.
+- "Prep a task for tomorrow's session."
+- "Write up a handoff spec I can come back to."
+- "Queue this as the next task."
+- "Plan tomorrow's work" (the words "plan" + "tomorrow" / "next session" combined).
 
-The judgment is "would a board ticket help a new contributor here?" — if the answer is no, skip the agent and just do the work.
+**Never auto-invoke**, even when starting a substantial feature. The user runs the iterative loop directly through plan-mode (`EnterPlanMode` / `ExitPlanMode`) and the `Plan` subagent — the PM-agent handoff is reserved for end-of-day queueing.
 
-## Required `STATE.md` story shape (produced by the PM agent)
+When invoked, the PM agent **overwrites** STATE.md with a single task block in the shape below. There is no append, no history, no list — at most ONE task at a time.
+
+## Required `STATE.md` task shape (produced by the PM agent)
 
 1. **Title** (one line, under 80 chars).
-2. **Summary** (2–3 sentences).
-3. **Background / Context** (why now, ties to prior/next phases).
-4. **Detailed scope** (checkboxes grouped by layer — group names are project-specific; see [PROJECT.md](PROJECT.md)).
-5. **Acceptance criteria** (numbered, testable).
-6. **Out of scope** (explicit non-goals).
-7. **Estimated effort** (story points or dev-days).
-8. **Dependencies / risks** (what blocks this; what could go wrong).
-9. **Definition of done** (concrete completion signal).
-10. **References** (plan file path, related Phase N work, key file:line pointers).
+2. **Summary** (2–3 sentences — what the next session is picking up + why).
+3. **Background / Context** (relevant prior work, file pointers, current state).
+4. **Acceptance criteria** (numbered, testable — what "done" looks like).
+5. **Out of scope** (explicit non-goals so the next session doesn't sprawl).
+6. **References** (file:line pointers, related PRs / commits, any links).
 
-The approved plan document lives at `~/.claude/plans/<slug>.md` and is the long-form source of truth; `STATE.md`'s board story is the tracker-shaped summary that points back to it.
+The task block is overwritten on each PM invocation. When the next session picks up the task and ships it, STATE.md is reset to `_No task queued._` (either by the next PM invocation or as the last step of the work).
 
-## Splitting large phases into sub-phases
+## Anti-bloat
 
-If the implementation plan (Plan-agent output, "Implementation sequence" section) naturally contains **3 or more numbered internal phases (A, B, C, …)**, offer to split the work into sub-phases before entering plan-mode approval. Each internal phase is a candidate sub-phase boundary.
-
-### How the split works
-
-1. Show the user the proposed sub-phase split derived from the plan's internal phases. Group them however the natural seams suggest — usually one internal phase per sub-phase, but contiguous internal phases can be grouped (e.g., "7.1 = A + B + C; 7.2 = D + E; 7.3 = F + G").
-2. Ask: *"Which sub-phases do you want to take in this session? The rest queue for later."* User picks one or more contiguous sub-phases.
-3. The Senior PM agent re-authors the **active sub-phase's** full board story (focused scope, narrower AC, smaller projected delta). The queued sub-phases get a one-line entry each in the phase-status table — NOT a full board story.
-4. Plan documents are per-sub-phase: `~/.claude/plans/phase-<N>-<sub>-<slug>.md`.
-5. On sub-phase completion, run the normal Phase Lifecycle "On phase completion" steps, then: if a queued sub-phase remains, the PM agent authors its board story and replaces STATE.md's active section. If none remain, place a one-line placeholder.
-
-### Re-splitting
-
-The same offer fires when a queued sub-phase becomes active and its plan still has ≥3 internal phases. Phase 7.2's plan may itself trip the trigger → split it into 7.2 (slimmer) + 7.3 (leftover). **Always sequential, never nested** — there is no Phase 7.1.1.
-
-### When NOT to split
-
-- The plan has fewer than 3 internal phases.
-- User explicitly waves off the offer ("just do the whole thing").
-- The plan's internal phases are tightly coupled (e.g., a `SaveData` schema change that spans 3 internal phases but is one atomic refactor — splitting would create incoherent intermediate states). In this case, flag it but still ask the user.
-
-### Anti-bloat for splits
-
-- One active sub-phase board story in `STATE.md` at a time (unchanged from base rule).
-- Queued sub-phases are table entries only, not narrative.
-- `COMPLETED.md` gets one line per sub-phase shipped — don't roll them up at the end.
-- The phase-status table keeps split entries forever; it's the historical ledger.
-
-## On phase completion
-
-When the active board story's Definition of Done is satisfied:
-
-1. Re-run the full test suite, record the new count in `.claude/docs/STATE.md`.
-2. Add ONE line to [`.claude/docs/COMPLETED.md`](.claude/docs/COMPLETED.md) at the top: date, phase title, test delta, plan-file link, brief impact summary. Do NOT copy the full board story — the long-form lives in the plan document.
-3. Bump the phase-status table in `.claude/docs/STATE.md` to **Done**.
-4. Replace `STATE.md`'s "Active board story" section with the next phase's PM-agent-produced story, OR a one-line placeholder if no next phase is queued.
-5. Update [`README.md`](README.md) system inventory + "Phase Completion Status" table.
-6. Capture any user corrections in [`.claude/docs/lessons.md`](.claude/docs/lessons.md).
-
-## Anti-bloat rules
-
-- `STATE.md` holds exactly one board story. Do not append shipped entries there.
-- `COMPLETED.md` entries are **one-liners**. Full detail belongs in `~/.claude/plans/<slug>.md` and commit history.
-- Don't re-author the PM story mid-phase unless scope materially changed — small adjustments go in `.claude/docs/todo.md`.
+- STATE.md holds AT MOST one task. Never a list, never a history.
+- No COMPLETED.md, no shipped-work log — `git log` is authoritative.
+- Plan files live at `.claude/plans/<slug>.md` during the work and are deleted on completion (see §1).
 
 ---
 

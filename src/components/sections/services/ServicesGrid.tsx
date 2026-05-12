@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Cube, Code, Compass, Sparkle } from "@phosphor-icons/react";
+import { Browsers, DeviceMobile, Stack, Sparkle } from "@phosphor-icons/react";
 import { useTranslations } from "next-intl";
 import { spring, usePrefersReducedMotion } from "@/lib/motion";
 import { cn } from "@/lib/cn";
@@ -17,9 +17,9 @@ import { cn } from "@/lib/cn";
  * stagger orchestration works (taste-skill rule: same tree).
  */
 const SERVICES = [
-  { key: "1", Icon: Cube },
-  { key: "2", Icon: Code },
-  { key: "3", Icon: Compass },
+  { key: "1", Icon: Browsers },
+  { key: "2", Icon: DeviceMobile },
+  { key: "3", Icon: Stack },
   { key: "4", Icon: Sparkle },
 ] as const;
 
@@ -66,7 +66,7 @@ export function ServicesGrid() {
           <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-accent-soft text-accent mb-6">
             <Icon weight="light" size={24} />
           </div>
-          <h3 className="text-2xl md:text-[1.6rem] font-display tracking-tight text-fg mb-3">
+          <h3 className="text-2xl md:text-[1.65rem] font-display tracking-tight text-fg mb-3">
             {t(`${key}.title`)}
           </h3>
           <p className="text-base text-fg-muted leading-relaxed max-w-[40ch]">

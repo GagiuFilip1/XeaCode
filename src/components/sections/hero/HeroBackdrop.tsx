@@ -1,79 +1,56 @@
 "use client";
 
-import { memo } from "react";
-import { motion } from "framer-motion";
-import { Paw } from "@/components/icons/Paw";
-import { usePrefersReducedMotion } from "@/lib/motion";
+import type { MotionValue } from "framer-motion";
+import { HeroScrollScene } from "./HeroScrollScene";
 
 /**
- * Hero backdrop — three slow-drifting gradient blobs + dot-grid pattern + paw.
+ * Hero backdrop — three layers, bottom-to-top:
  *
- * Animation is transforms-only (no animating background-position; taste-skill
- * performance rule). Reduced-motion path: static blob positions, no animation.
+ *   1. HeroScrollScene — canvas (when scrollYProgress provided) or static <img>
+ *      end-frame (when omitted). Inward-masked.
+ *   2. Dot-grid pattern — CSS-only, inward-masked with the same ellipse so it
+ *      composites cleanly with the scene at the edges.
+ *   3. Bottom fade — gradient from --bg to transparent so the Hero transitions
+ *      cleanly to Services below.
  *
- * Memoized + isolated so the rest of the Hero re-renders don't restart drifts.
+ * PHASE 5: promoted from RSC to Client. The promotion is required because
+ * `MotionValue<number>` (Framer's reactive value primitive) is a Client-only
+ * construct and cannot be passed through an RSC component as a prop. The
+ * three child layers' content is unchanged; only the surrounding component's
+ * directive changes from "default" (RSC) to `"use client"`.
+ *
+ * Two call sites:
+ *   - HeroStatic         -> <HeroBackdrop />                                static path
+ *   - HeroScrollLocked   -> <HeroBackdrop scrollYProgress={scrollYProgress} /> canvas path
+ *
+ * The `scrollYProgress` prop is FORWARDED to HeroScrollScene, which uses it
+ * to decide between rendering the canvas branch (HeroCanvasScene) and the
+ * static branch (HeroStaticBackdrop).
+ *
+ * Phase 4 history: three Framer-Motion blob drifts lived here pre-Phase-4.
+ * Phase 4 removed them in favor of the scroll-scrubbed canvas (also quietly
+ * closing the suspected Phase 3 Turbopack memory blowup vector — see
+ * .claude/docs/lessons.md "Turbopack leaks past any V8 cap").
  */
-function HeroBackdropImpl() {
-  const reduced = usePrefersReducedMotion();
-
+export function HeroBackdrop({
+  scrollYProgress,
+  firstAnimationComplete,
+}: {
+  scrollYProgress?: MotionValue<number>;
+  firstAnimationComplete?: boolean;
+}) {
   return (
     <div
       aria-hidden
       className="absolute inset-0 overflow-hidden pointer-events-none"
     >
-      {/* Blob 1 — emerald wash, anchored top-right (the "asset zone") */}
-      <motion.div
-        className="absolute h-[70vh] w-[70vw] rounded-full"
-        style={{
-          top: "-15%",
-          right: "-20%",
-          background:
-            "radial-gradient(circle at center, oklch(0.66 0.13 165 / 0.22), transparent 65%)",
-          willChange: "transform",
-        }}
-        animate={reduced ? undefined : { x: [0, 28, 0], y: [0, -18, 0] }}
-        transition={{ duration: 18, ease: "easeInOut", repeat: Infinity }}
+      {/* z=0 — scroll-scrubbed canvas (or static <img> fallback) */}
+      <HeroScrollScene
+        scrollYProgress={scrollYProgress}
+        firstAnimationComplete={firstAnimationComplete}
       />
 
-      {/* Blob 2 — cool grey-blue mid */}
-      <motion.div
-        className="absolute h-[55vh] w-[55vw] rounded-full"
-        style={{
-          top: "30%",
-          left: "5%",
-          background:
-            "radial-gradient(circle at center, oklch(0.50 0.10 250 / 0.14), transparent 70%)",
-          willChange: "transform",
-        }}
-        animate={reduced ? undefined : { x: [0, -22, 0], y: [0, 22, 0] }}
-        transition={{
-          duration: 22,
-          ease: "easeInOut",
-          repeat: Infinity,
-          delay: 2,
-        }}
-      />
-
-      {/* Blob 3 — second emerald accent bottom-left */}
-      <motion.div
-        className="absolute h-[45vh] w-[45vw] rounded-full"
-        style={{
-          bottom: "-10%",
-          left: "-10%",
-          background:
-            "radial-gradient(circle at center, oklch(0.66 0.13 165 / 0.12), transparent 70%)",
-          willChange: "transform",
-        }}
-        animate={reduced ? undefined : { x: [0, 20, 0], y: [0, -15, 0] }}
-        transition={{
-          duration: 26,
-          ease: "easeInOut",
-          repeat: Infinity,
-          delay: 5,
-        }}
-      />
-
-      {/* Dot grid — CSS pattern, masked so it fades at edges */}
+      {/* z=1 — dot grid pattern, same inward-mask ellipse as the scene */}
       <div
         className="absolute inset-0 opacity-60"
         style={{
@@ -87,16 +64,8 @@ function HeroBackdropImpl() {
         }}
       />
 
-      {/* Paw easter egg #1 — sits in the right "asset zone" at a grid intersection.
-          Hidden on mobile (right column collapses; placement breaks). */}
-      <div className="absolute inset-0 hidden lg:block">
-        <Paw className="absolute top-[32%] right-[18%] text-fg/40" />
-      </div>
-
-      {/* Bottom fade — softens the section transition to the next one */}
+      {/* z=2 — bottom fade for section transition */}
       <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-bg via-bg/70 to-transparent" />
     </div>
   );
 }
-
-export const HeroBackdrop = memo(HeroBackdropImpl);

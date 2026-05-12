@@ -15,10 +15,13 @@ export function Services() {
     <section
       id="services"
       aria-labelledby="services-title"
-      className="scroll-mt-20 py-24 md:py-32"
+      className="scroll-mt-20 py-[clamp(72px,11vw,128px)]"
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <header className="mb-12 md:mb-20 max-w-3xl">
+        <header className="mb-12 md:mb-20 max-w-[56ch]">
+          <p className="text-[10px] font-mono uppercase tracking-[0.28em] text-accent mb-4">
+            {t("eyebrow")}
+          </p>
           <h2
             id="services-title"
             className="font-display text-4xl md:text-5xl tracking-tighter leading-[0.95] text-fg mb-4"

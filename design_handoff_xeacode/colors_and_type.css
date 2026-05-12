@@ -1,0 +1,330 @@
+/*
+ * XeaCode Design System — colors_and_type.css
+ *
+ * Drop-in CSS variables: color, type, spacing, radius, shadow, easing.
+ * Mirrors src/app/globals.css from the XeaCode codebase, framework-agnostic.
+ * Dark is the default (no class required). Add class="light" to <html> to flip.
+ */
+
+/* Geist Sans + Geist Mono via Google Fonts.
+   Substitution note: original codebase loads via next/font/google.
+   Geist is open-source — fontsource / vercel.com/font for offline use. */
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap");
+
+:root {
+  /* ---- Type families ---- */
+  --font-sans: "Geist", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --font-display: var(--font-sans);
+
+  /* ---- Color — dark (default) ---- */
+  --bg: oklch(0.16 0.005 250);
+  --bg-elevated: oklch(0.20 0.005 250);
+  --fg: oklch(0.96 0.005 250);
+  --fg-muted: oklch(0.74 0.01 250);
+  --fg-subtle: oklch(0.62 0.008 250);
+  --border: oklch(0.26 0.01 250);
+  --border-strong: oklch(0.36 0.01 250);
+
+  --accent: oklch(0.66 0.13 165);
+  --accent-soft: oklch(0.66 0.13 165 / 0.18);
+  --accent-strong: oklch(0.72 0.14 165);
+
+  /* Semantic error (form fields only) */
+  --error: oklch(0.65 0.22 25);
+  --error-soft: oklch(0.65 0.22 25 / 0.08);
+
+  /* ---- Shadows (inner highlight + tinted drop) ---- */
+  --shadow-soft:
+    0 1px 0 0 oklch(1 0 0 / 0.04) inset,
+    0 8px 32px -12px oklch(0 0 0 / 0.5);
+  --shadow-card:
+    0 1px 0 0 oklch(1 0 0 / 0.05) inset,
+    0 20px 40px -15px oklch(0 0 0 / 0.6);
+  --shadow-elevated:
+    0 1px 0 0 oklch(1 0 0 / 0.06) inset,
+    0 30px 60px -20px oklch(0 0 0 / 0.7);
+
+  /* ---- Easings ---- */
+  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
+
+  /* ---- Radii ---- */
+  --r-sm: 4px;
+  --r-md: 8px;     /* rounded-lg, form fields */
+  --r-lg: 16px;    /* rounded-2xl, cards */
+  --r-full: 9999px;
+
+  /* ---- Spacing scale (Tailwind-aligned in 4px steps) ---- */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-8: 32px;
+  --s-10: 40px;
+  --s-12: 48px;
+  --s-16: 64px;
+  --s-20: 80px;
+  --s-24: 96px;
+  --s-32: 128px;
+
+  /* ---- Container ---- */
+  --container: 1280px;
+  --container-padding: clamp(16px, 4vw, 32px);
+
+  /* ---- Section rhythm ---- */
+  --section-y: clamp(96px, 14vw, 128px);
+  --section-header-mb: clamp(48px, 8vw, 80px);
+
+  color-scheme: dark;
+}
+
+.light {
+  --bg: oklch(0.985 0.003 85);
+  --bg-elevated: oklch(1 0 0);
+  --fg: oklch(0.18 0.01 250);
+  --fg-muted: oklch(0.38 0.01 250);
+  --fg-subtle: oklch(0.48 0.008 250);
+  --border: oklch(0.88 0.005 250);
+  --border-strong: oklch(0.78 0.005 250);
+
+  --accent: oklch(0.55 0.13 165);
+  --accent-soft: oklch(0.55 0.13 165 / 0.12);
+  --accent-strong: oklch(0.48 0.14 165);
+
+  --error: oklch(0.55 0.22 25);
+  --error-soft: oklch(0.55 0.22 25 / 0.06);
+
+  --shadow-soft:
+    0 1px 0 0 oklch(0 0 0 / 0.03) inset,
+    0 8px 32px -12px oklch(0 0 0 / 0.08);
+  --shadow-card:
+    0 1px 0 0 oklch(0 0 0 / 0.04) inset,
+    0 20px 40px -15px oklch(0 0 0 / 0.12);
+  --shadow-elevated:
+    0 1px 0 0 oklch(0 0 0 / 0.05) inset,
+    0 30px 60px -20px oklch(0 0 0 / 0.18);
+
+  color-scheme: light;
+}
+
+/* ---- Base ---- */
+html {
+  scroll-behavior: smooth;
+}
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+::selection {
+  background: var(--accent-soft);
+  color: var(--fg);
+}
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* ---- Semantic type classes ---- */
+.h1, h1 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(2.5rem, 5.5vw, 4.5rem);
+  line-height: 0.95;
+  letter-spacing: -0.025em;
+  color: var(--fg);
+  margin: 0;
+}
+.h2, h2 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(2.25rem, 4vw, 3rem);
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  color: var(--fg);
+  margin: 0;
+}
+.h3, h3 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(1.5rem, 2.2vw, 1.75rem);
+  line-height: 1.05;
+  letter-spacing: -0.015em;
+  color: var(--fg);
+  margin: 0;
+}
+.h4, h4 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 1.25rem;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--fg);
+  margin: 0;
+}
+.p, p {
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--fg-muted);
+  max-width: 60ch;
+  margin: 0;
+}
+.lead {
+  font-size: 1.125rem;
+  line-height: 1.6;
+  color: var(--fg-muted);
+  max-width: 55ch;
+}
+
+/* Eyebrow / mono caption / label — the single most-used micro-type */
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1.2;
+  text-transform: uppercase;
+  letter-spacing: 0.28em;
+  color: var(--accent);
+}
+.label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.2;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--fg-subtle);
+}
+.meta {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.4;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--fg-subtle);
+}
+.mono {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+}
+.italic-outcome {
+  font-style: italic;
+  color: var(--fg);
+  line-height: 1.6;
+}
+
+/* ---- Component primitives ---- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 48px;
+  padding: 0 24px;
+  border-radius: var(--r-full);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s, transform 0.15s;
+  border: 0;
+  will-change: transform;
+}
+.btn-primary {
+  background: var(--accent);
+  color: var(--bg);
+  box-shadow: var(--shadow-card);
+}
+.btn-primary:hover { background: var(--accent-strong); }
+.btn-primary:active { transform: scale(0.98); }
+.btn-secondary {
+  background: transparent;
+  color: var(--fg);
+  border: 1px solid var(--border-strong);
+}
+.btn-secondary:hover {
+  border-color: color-mix(in oklch, var(--fg) 40%, transparent);
+  background: color-mix(in oklch, var(--bg-elevated) 40%, transparent);
+}
+.btn-secondary:active { transform: scale(0.98); }
+
+.card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 40px;
+  box-shadow: var(--shadow-soft);
+  transition: box-shadow 0.3s, border-color 0.3s, transform 0.3s var(--ease-spring);
+}
+.card:hover {
+  box-shadow: var(--shadow-card);
+  border-color: var(--border-strong);
+  transform: translateY(-6px);
+}
+.icon-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--r-full);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.field input,
+.field textarea {
+  background: color-mix(in oklch, var(--bg-elevated) 60%, transparent);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 12px 16px;
+  font-family: inherit;
+  font-size: 1rem;
+  color: var(--fg);
+  transition: border-color 0.2s, background-color 0.2s;
+}
+.field input::placeholder,
+.field textarea::placeholder {
+  color: color-mix(in oklch, var(--fg-subtle) 70%, transparent);
+}
+.field input:hover,
+.field textarea:hover { border-color: var(--border-strong); }
+.field input:focus,
+.field textarea:focus {
+  outline: 0;
+  border-color: var(--accent);
+  background: var(--bg-elevated);
+}
+
+/* Hairline group — preferred over card chrome for list-of-rows */
+.hairline-group {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.hairline-group > * + * { border-top: 1px solid var(--border); }
+
+/* ---- Reduced motion ---- */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}

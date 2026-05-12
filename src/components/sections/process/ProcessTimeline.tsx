@@ -8,13 +8,13 @@ import { ProcessProgress } from "./ProcessProgress";
 const STEPS = ["1", "2", "3", "4"] as const;
 
 /**
- * Sticky-scroll narrative orchestrator. Tracks the section's `scrollYProgress`
- * and hands it to the side progress indicator. Each `ProcessStep` independently
- * computes its own scroll-driven opacity + scale from its own ref.
+ * Process timeline body.
  *
- * Desktop (lg+): two-column grid — sticky progress indicator left, sticky-
- * narrative steps right. Mobile: single column, steps stack and each step
- * still individually sticks at `top-32` (cheaper visual that still feels right).
+ * Layout: at lg+, two columns — sticky progress bar (left, hidden on mobile)
+ * + a vertical hairline-divided list of steps (right). The section's
+ * `scrollYProgress` drives the progress-bar fill height.
+ *
+ * The old per-step sticky-scroll narrative is gone; steps are plain <li>s.
  */
 export function ProcessTimeline() {
   const ref = useRef<HTMLDivElement>(null);
@@ -26,21 +26,15 @@ export function ProcessTimeline() {
   return (
     <div
       ref={ref}
-      className="relative grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-8 lg:gap-20"
+      className="relative grid grid-cols-1 min-[980px]:grid-cols-[auto_1fr] gap-8 min-[980px]:gap-20"
     >
-      <aside
-        className="hidden lg:block"
-        aria-hidden
-      >
+      <aside className="hidden min-[980px]:block" aria-hidden>
         <div className="sticky top-32">
-          <ProcessProgress
-            scrollYProgress={scrollYProgress}
-            total={STEPS.length}
-          />
+          <ProcessProgress scrollYProgress={scrollYProgress} />
         </div>
       </aside>
 
-      <ol className="flex flex-col">
+      <ol className="flex flex-col divide-y divide-border">
         {STEPS.map((stepKey, idx) => (
           <ProcessStep
             key={stepKey}

@@ -1,49 +1,34 @@
 "use client";
 
 import { motion, useTransform, type MotionValue } from "framer-motion";
-import { cn } from "@/lib/cn";
 
 /**
- * Vertical progress indicator for the Process timeline. Track + dot markers
- * are static, the fill height tracks the parent timeline's `scrollYProgress`.
+ * Vertical progress bar for the Process timeline.
+ *
+ * Track: 2px wide, 240px tall, bg-border. Fill: bg-accent, height tracks
+ * the parent's scrollYProgress via useTransform. CSS `transition: height
+ * 0.3s var(--ease-spring)` smooths the visual update; reduced-motion's
+ * 0.001ms clamp causes the fill to snap instead of ease (passive indicator,
+ * not an animation — no separate reduced-motion code path required).
  *
  * Desktop-only — hidden on mobile via the parent's `hidden lg:block`.
  */
 export function ProcessProgress({
   scrollYProgress,
-  total,
 }: {
   scrollYProgress: MotionValue<number>;
-  total: number;
 }) {
   const fillHeight = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
 
   return (
-    <div className="relative w-[2px] h-72 bg-border-strong rounded-full">
+    <div className="relative w-[2px] h-60 bg-border">
       <motion.div
-        className="absolute inset-x-0 top-0 bg-accent rounded-full will-change-[height]"
-        style={{ height: fillHeight }}
+        className="absolute inset-x-0 top-0 bg-accent will-change-[height]"
+        style={{
+          height: fillHeight,
+          transition: "height 0.3s var(--ease-spring)",
+        }}
       />
-
-      {Array.from({ length: total }).map((_, i) => {
-        const pos = total > 1 ? (i / (total - 1)) * 100 : 50;
-        return (
-          <div
-            key={i}
-            className={cn(
-              "absolute -left-[5px]",
-              "w-[12px] h-[12px] rounded-full",
-              "border-2 border-bg",
-              "bg-bg-elevated",
-            )}
-            style={{
-              top: `${pos}%`,
-              transform: "translateY(-50%)",
-            }}
-            aria-hidden
-          />
-        );
-      })}
     </div>
   );
 }

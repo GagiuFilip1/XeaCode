@@ -1,19 +1,26 @@
 @import "tailwindcss";
 
 /*
- * XeaCode — design tokens
+ * XeaCode — design tokens (Phase 3 — reconciled with design_handoff_xeacode/colors_and_type.css)
  *
- * Tuned taste-skill dials:
- *   DESIGN_VARIANCE = 6   (offset/asymmetric, not centered, not chaotic)
- *   MOTION_INTENSITY = 7  (scroll-driven, spring physics, restraint)
- *   VISUAL_DENSITY = 3    (airy, gallery-tier negative space)
+ * Authority: design_handoff_xeacode/colors_and_type.css.
+ * Translation rules:
+ *   - :root holds dark theme values (no class required).
+ *   - .light overrides for light theme.
+ *   - @theme inline exposes tokens as Tailwind utilities — match the names every
+ *     component already uses (bg-bg, text-fg-muted, etc.) so no per-component
+ *     class rename is required.
+ *   - Marquee keyframes + reduced-motion fallback preserved from current file.
  *
- * Rationale lives in .claude/docs/taste-skill-rules.md.
+ * Taste-skill dials retained from Phase 1:
+ *   DESIGN_VARIANCE = 6, MOTION_INTENSITY = 7, VISUAL_DENSITY = 3.
+ *
  * Dark is the truly-default theme (:root values). `.light` class overrides.
  */
 
-/* class-strategy dark variant, paired with next-themes attribute="class" */
+/* class-strategy dark + light variants for Tailwind utility gating per theme */
 @custom-variant dark (&:where(.dark, .dark *));
+@custom-variant light (&:where(.light, .light *));
 
 @theme inline {
   /* Type */
@@ -26,6 +33,13 @@
      Pair with content duplicated 2× and `width: max-content`. */
   --animate-marquee-left: marquee-left 50s linear infinite;
   --animate-marquee-right: marquee-right 50s linear infinite;
+
+  /* Gentle vertical bob — Hero Discover button.
+     translate3d forces a GPU compositor layer (matches marquee pattern).
+     The global prefers-reduced-motion block at the bottom of this file
+     clamps animation-iteration-count to 1, so this auto-disables for
+     reduced-motion users. */
+  --animate-float: float 4s ease-in-out infinite;
 
   @keyframes marquee-left {
     from {
@@ -43,6 +57,15 @@
       transform: translate3d(0, 0, 0);
     }
   }
+  @keyframes float {
+    0%,
+    100% {
+      transform: translate3d(0, 0, 0);
+    }
+    50% {
+      transform: translate3d(0, -8px, 0);
+    }
+  }
 
   /* Semantic color tokens — values come from :root / .light below */
   --color-bg: var(--bg);
@@ -55,6 +78,8 @@
   --color-accent: var(--accent);
   --color-accent-soft: var(--accent-soft);
   --color-accent-strong: var(--accent-strong);
+  --color-error: var(--error);
+  --color-error-soft: var(--error-soft);
 
   /* Shadows — tinted to background hue */
   --shadow-soft: var(--shadow-soft-value);
@@ -73,7 +98,7 @@
   --bg-elevated: oklch(0.20 0.005 250);
   --fg: oklch(0.96 0.005 250);
   --fg-muted: oklch(0.74 0.01 250);
-  --fg-subtle: oklch(0.62 0.008 250);  /* WCAG 4.5:1 on bg */
+  --fg-subtle: oklch(0.62 0.008 250); /* WCAG 4.5:1 on bg */
   --border: oklch(0.26 0.01 250);
   --border-strong: oklch(0.36 0.01 250);
 
@@ -81,6 +106,10 @@
   --accent: oklch(0.66 0.13 165);
   --accent-soft: oklch(0.66 0.13 165 / 0.18);
   --accent-strong: oklch(0.72 0.14 165);
+
+  /* Semantic error (form fields only) */
+  --error: oklch(0.65 0.22 25);
+  --error-soft: oklch(0.65 0.22 25 / 0.08);
 
   /* Inner-highlight + tinted drop shadows (no neon glow) */
   --shadow-soft-value:
@@ -102,13 +131,16 @@
   --bg-elevated: oklch(1 0 0);
   --fg: oklch(0.18 0.01 250);
   --fg-muted: oklch(0.38 0.01 250);
-  --fg-subtle: oklch(0.48 0.008 250);  /* WCAG 4.5:1 on bg */
+  --fg-subtle: oklch(0.48 0.008 250); /* WCAG 4.5:1 on bg */
   --border: oklch(0.88 0.005 250);
   --border-strong: oklch(0.78 0.005 250);
 
   --accent: oklch(0.55 0.13 165);
   --accent-soft: oklch(0.55 0.13 165 / 0.12);
   --accent-strong: oklch(0.48 0.14 165);
+
+  --error: oklch(0.55 0.22 25);
+  --error-soft: oklch(0.55 0.22 25 / 0.06);
 
   --shadow-soft-value:
     0 1px 0 0 oklch(0 0 0 / 0.03) inset,

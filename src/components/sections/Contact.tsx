@@ -12,6 +12,10 @@ import { ContactDetails } from "./contact/ContactDetails";
  * Mobile order: form first (primary affordance above the fold), details
  * second. Achieved via the natural source order — desktop reverses nothing
  * since the grid keeps form left already.
+ *
+ * Per design handoff: section sits on `bg-elevated` for alternating rhythm.
+ * The pre-form note is rendered inside `ContactForm` (above the submit
+ * button), NOT in this header.
  */
 export function Contact() {
   const t = useTranslations("contact");
@@ -20,10 +24,13 @@ export function Contact() {
     <section
       id="contact"
       aria-labelledby="contact-title"
-      className="scroll-mt-20 py-24 md:py-32"
+      className="scroll-mt-20 py-[clamp(72px,11vw,128px)] bg-bg-elevated"
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <header className="mb-16 md:mb-20 max-w-3xl">
+        <header className="mb-16 md:mb-20 max-w-[56ch]">
+          <p className="text-[10px] font-mono uppercase tracking-[0.28em] text-accent mb-4">
+            {t("eyebrow")}
+          </p>
           <h2
             id="contact-title"
             className="font-display text-4xl md:text-5xl tracking-tighter leading-[0.95] text-fg mb-4"
@@ -32,9 +39,6 @@ export function Contact() {
           </h2>
           <p className="text-base md:text-lg text-fg-muted leading-relaxed max-w-[55ch]">
             {t("subtitle")}
-          </p>
-          <p className="mt-4 text-xs font-mono uppercase tracking-[0.18em] text-fg-muted max-w-[55ch]">
-            {t("preformNote")}
           </p>
         </header>
 

@@ -12,7 +12,7 @@ type NavSection =
   | "services"
   | "process"
   | "work"
-  | "tech"
+  | "stack"
   | "team"
   | "faq"
   | "contact";
@@ -20,7 +20,7 @@ const NAV_SECTIONS: readonly NavSection[] = [
   "services",
   "process",
   "work",
-  "tech",
+  "stack",
   "team",
   "faq",
   "contact",
@@ -55,7 +55,7 @@ export function Header() {
 
         <nav
           className="hidden md:flex items-center gap-8"
-          aria-label="primary"
+          aria-label="Primary navigation"
         >
           {NAV_SECTIONS.map((section) => (
             <a

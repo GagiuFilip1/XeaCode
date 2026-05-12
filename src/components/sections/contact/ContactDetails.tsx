@@ -1,19 +1,24 @@
 import { useTranslations } from "next-intl";
-import { EnvelopeSimple, Link as LinkIcon, Calendar } from "@phosphor-icons/react/dist/ssr";
+import {
+  EnvelopeSimple,
+  MapPin,
+  Clock,
+} from "@phosphor-icons/react/dist/ssr";
 
 /**
- * Contact details column — the right side of the Contact section's 2-col grid.
+ * Contact details column — right side of the Contact 2-col grid.
  *
- * RSC: pure presentational, no client state. Three labeled blocks (email,
- * socials, calendar) using placeholder hrefs that the content pass replaces
- * with real values. Mono-caption labels match the eyebrow style used across
- * the site (Hero eyebrow, Tech category breadcrumb, form field labels).
+ * Three rows per design:
+ *   1. EMAIL          → mailto:hello@xeacode.com (real link, hover state)
+ *   2. BASED IN       → Bucharest, Romania (CET / CEST) (non-link <div>)
+ *   3. TYPICAL REPLY  → One business day, written personally (non-link <div>)
  *
- * `divide-y border-border` groups the rows without resorting to elevated
- * cards — taste-skill §4 prefers logic-grouping over container overuse.
+ * Rows 2 and 3 are non-interactive — rendered as <div>, not <a> without href,
+ * because design's `<a>` without `href` is invalid HTML (Code Reviewer flag).
+ * Visual outcome identical.
  *
- * Imports from `@phosphor-icons/react/dist/ssr` so the icons render in the
- * Server Component without forcing this file to "use client".
+ * RSC. Imports from `@phosphor-icons/react/dist/ssr` so icons render server-
+ * side without forcing this file to "use client".
  */
 export function ContactDetails() {
   const t = useTranslations("contact.details");
@@ -23,20 +28,18 @@ export function ContactDetails() {
       <Row
         icon={<EnvelopeSimple weight="light" size={18} />}
         label={t("emailLabel")}
-        href="mailto:hello@xeacode.dev"
-        text="hello@xeacode.dev"
+        text={t("emailValue")}
+        href={`mailto:${t("emailValue")}`}
       />
       <Row
-        icon={<LinkIcon weight="light" size={18} />}
-        label={t("socialsLabel")}
-        text="@xeacode"
-        href="#"
+        icon={<MapPin weight="light" size={18} />}
+        label={t("locationLabel")}
+        text={t("locationValue")}
       />
       <Row
-        icon={<Calendar weight="light" size={18} />}
-        label={t("calendarLabel")}
-        text="cal.xeacode.dev"
-        href="#"
+        icon={<Clock weight="light" size={18} />}
+        label={t("replyLabel")}
+        text={t("replyValue")}
       />
     </div>
   );
@@ -50,23 +53,41 @@ function Row({
 }: {
   icon: React.ReactNode;
   label: string;
-  href: string;
+  href?: string;
   text: string;
 }) {
+  const inner = (
+    <>
+      <span
+        className={
+          href
+            ? "text-fg-muted group-hover:text-accent transition-colors"
+            : "text-fg-muted"
+        }
+      >
+        {icon}
+      </span>
+      <span>{text}</span>
+    </>
+  );
+
   return (
     <div className="flex flex-col gap-2 py-6">
       <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-fg-subtle">
         {label}
       </span>
-      <a
-        href={href}
-        className="group inline-flex items-center gap-3 text-base text-fg hover:text-accent transition-colors w-fit"
-      >
-        <span className="text-fg-muted group-hover:text-accent transition-colors">
-          {icon}
-        </span>
-        <span>{text}</span>
-      </a>
+      {href ? (
+        <a
+          href={href}
+          className="group inline-flex items-center gap-3 text-base text-fg hover:text-accent transition-colors w-fit"
+        >
+          {inner}
+        </a>
+      ) : (
+        <div className="inline-flex items-center gap-3 text-base text-fg w-fit">
+          {inner}
+        </div>
+      )}
     </div>
   );
 }

@@ -15,7 +15,7 @@ import { Contact } from "@/components/sections/Contact";
  * Section order (Phase 2.2 + 2.3 combined — final):
  * Hero → Services → Process → SelectedWork → TechStack → Team → FAQ → Contact
  *
- * Anchor targets: #hero, #services, #process, #work, #tech, #team, #faq, #contact.
+ * Anchor targets: #hero, #services, #process, #work, #stack, #team, #faq, #contact.
  */
 export default function HomePage() {
   return (

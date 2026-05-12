@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack",
+    "extract-frames": "node scripts/extract-hero-frames.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
@@ -27,6 +28,8 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
+    "ffmpeg-static": "^5.2.0",
+    "ffprobe-static": "^3.1.0",
     "lighthouse": "^13.3.0",
     "tailwindcss": "^4",
     "typescript": "^5"
@@ -36,6 +39,7 @@
     "unrs-resolver"
   ],
   "trustedDependencies": [
+    "ffmpeg-static",
     "sharp",
     "unrs-resolver"
   ]

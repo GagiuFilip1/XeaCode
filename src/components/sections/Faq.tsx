@@ -1,7 +1,7 @@
 import { useTranslations } from "next-intl";
 
 /**
- * FAQ — 7 Q/A pairs, static.
+ * FAQ — 5 Q/A pairs, static.
  *
  * Pure RSC, no JS, no accordion. Both Q and A are always visible.
  * Rationale: more scannable, accessible by default, no hydration cost, no
@@ -12,7 +12,7 @@ import { useTranslations } from "next-intl";
  * pairs. Hairline rule between entries. Display type for the question,
  * body sans for the answer.
  */
-const ITEMS = ["1", "2", "3", "4", "5", "6", "7"] as const;
+const ITEMS = ["1", "2", "3", "4", "5"] as const;
 
 export function Faq() {
   const t = useTranslations("faq");
@@ -21,19 +21,19 @@ export function Faq() {
     <section
       id="faq"
       aria-labelledby="faq-title"
-      className="scroll-mt-20 py-24 md:py-32"
+      className="scroll-mt-20 py-[clamp(72px,11vw,128px)]"
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <header className="mb-12 md:mb-16 max-w-3xl">
+        <header className="mb-12 md:mb-16 max-w-[56ch]">
+          <p className="text-[10px] font-mono uppercase tracking-[0.28em] text-accent mb-4">
+            {t("eyebrow")}
+          </p>
           <h2
             id="faq-title"
-            className="font-display text-4xl md:text-5xl tracking-tighter leading-[0.95] text-fg mb-4"
+            className="font-display text-4xl md:text-5xl tracking-tighter leading-[0.95] text-fg"
           >
             {t("title")}
           </h2>
-          <p className="text-base md:text-lg text-fg-muted leading-relaxed max-w-[55ch]">
-            {t("subtitle")}
-          </p>
         </header>
 
         <dl className="max-w-3xl flex flex-col divide-y divide-border border-y border-border">

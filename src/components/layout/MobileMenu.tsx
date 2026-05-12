@@ -88,7 +88,7 @@ export function MobileMenu({
               </div>
               <nav
                 className="flex flex-col"
-                aria-label="mobile primary"
+                aria-label="Mobile primary navigation"
               >
                 {navSections.map((section, idx) => (
                   <a

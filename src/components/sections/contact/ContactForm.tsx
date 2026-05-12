@@ -171,7 +171,6 @@ export function ContactForm() {
           aria-invalid={!!errors.name}
           aria-describedby={errors.name ? "contact-name-error" : undefined}
           disabled={submitting}
-          placeholder={t("namePlaceholder")}
           className={inputClass(!!errors.name)}
         />
       </Field>
@@ -191,7 +190,6 @@ export function ContactForm() {
           aria-invalid={!!errors.email}
           aria-describedby={errors.email ? "contact-email-error" : undefined}
           disabled={submitting}
-          placeholder={t("emailPlaceholder")}
           className={inputClass(!!errors.email)}
         />
       </Field>
@@ -204,7 +202,6 @@ export function ContactForm() {
           value={values.company}
           onChange={(e) => update("company", e.target.value)}
           disabled={submitting}
-          placeholder={t("companyPlaceholder")}
           className={inputClass(false)}
         />
       </Field>
@@ -225,7 +222,6 @@ export function ContactForm() {
             errors.message ? "contact-message-error" : undefined
           }
           disabled={submitting}
-          placeholder={t("messagePlaceholder")}
           className={cn(inputClass(!!errors.message), "resize-y min-h-[120px]")}
         />
       </Field>
@@ -278,7 +274,7 @@ function Field({
     <div className="flex flex-col gap-2">
       <label
         htmlFor={id}
-        className="text-xs font-mono uppercase tracking-[0.18em] text-fg-subtle"
+        className="text-xs font-mono uppercase tracking-[0.2em] text-fg-subtle"
       >
         {label}
       </label>
@@ -304,7 +300,6 @@ function inputClass(hasError: boolean): string {
     hasError ? "border-rose-500/50" : "border-border hover:border-border-strong",
     "px-4 py-3",
     "text-base text-fg",
-    "placeholder:text-fg-subtle/70",
     "focus:outline-none focus:border-accent focus:bg-bg-elevated",
     "transition-colors duration-200",
     "disabled:opacity-60 disabled:cursor-not-allowed",
