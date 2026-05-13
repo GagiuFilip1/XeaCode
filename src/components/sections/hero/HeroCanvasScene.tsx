@@ -3,20 +3,20 @@
 import { useEffect, useRef } from "react";
 import type { MotionValue } from "framer-motion";
 import { useFrameSequence } from "./use-frame-sequence";
+import { INWARD_MASK } from "./hero-mask";
 
 const TOTAL_FRAMES = 180;
-const FRAME_PATH = "/hero-frames/{{index}}.webp";
 
-// Inward radial mask — identical to the dot-grid mask in HeroBackdrop so the
-// canvas and the dot-grid fade together at the same ellipse boundary.
-const INWARD_MASK =
-  "radial-gradient(ellipse 80% 55% at 60% 45%, black 30%, transparent 85%)";
+const buildFramePath = (oneBasedIndex: number) =>
+  `/hero-frames/${String(oneBasedIndex).padStart(4, "0")}.webp`;
 
-// Center-cropped draw — mirrors CSS `object-fit: cover`. Scales the source
-// image to cover the entire canvas while preserving aspect ratio; overflow
-// is cropped equally on the two opposite sides. Matches the `object-cover`
-// class on the static <img> fallback in HeroScrollScene.tsx, so the canvas
-// branch and the static branch render the asset with the same framing.
+/**
+ * Center-cropped draw — mirrors CSS `object-fit: cover`. Scales the source
+ * image to cover the entire canvas while preserving aspect ratio; overflow
+ * is cropped equally on the two opposite sides. Matches the `object-cover`
+ * class on the static <img> fallback so the canvas branch and the static
+ * branch render the asset with the same framing.
+ */
 function drawCover(
   ctx: CanvasRenderingContext2D,
   img: HTMLImageElement,
@@ -33,12 +33,10 @@ function drawCover(
   let dw = canvasW;
   let dh = canvasH;
   if (srcRatio > dstRatio) {
-    // Source wider than destination — fit height, overflow horizontally.
     dh = canvasH;
     dw = dh * srcRatio;
     dx = (canvasW - dw) / 2;
   } else {
-    // Source taller (or equal) — fit width, overflow vertically.
     dw = canvasW;
     dh = dw / srcRatio;
     dy = (canvasH - dh) / 2;
@@ -47,33 +45,14 @@ function drawCover(
 }
 
 /**
- * HeroCanvasScene — the scroll-scrubbed canvas branch of the Hero backdrop.
+ * The scroll-scrubbed canvas branch of the Hero backdrop. Takes a
+ * scrollYProgress MotionValue from the parent (HeroScrollLocked) and drives
+ * the canvas frame index through `useFrameSequence`.
  *
- * Phase 6: TOTAL_FRAMES bumped 120 -> 180 because the source MP4
- * (motions/final.mp4) is ~10s vs the previous ~5s clip, so more frames are
- * needed to preserve scrub smoothness across the same 300vh budget. The hook
- * signature is unchanged — passes through `scrollYProgress` (which in the
- * Phase 6 wiring is the smoothed-spring MotionValue from HeroScrollLocked).
- *
- * Phase 5: accepts `scrollYProgress` as a prop (lifted from the parent
- * `HeroScrollLocked`) instead of owning a `useScroll` internally. The hook
- * `useFrameSequence` is the consumer of that MotionValue.
- *
- * The canvas container ref (`containerRef`) is still owned here — it's used
- * by the ResizeObserver to size the canvas bitmap to DPR x CSS dimensions on
- * every container resize. It is NOT a scroll target anymore.
- *
- * Mounted only when the parent has decided (a) we're past hydration AND (b)
- * the user is on a fine-pointer device with motion preference allowed (those
- * branches now live in `HeroContent`, two levels up).
- *
- * Image rendering:
- *   - canvas bitmap = floor(cssW * dpr) x floor(cssH * dpr) for retina crispness.
- *   - 2D context with `alpha: true` so the inward mask clips to transparent
- *     at the ellipse boundaries.
- *   - On each `frameImage` change, ctx.drawImage stretches the source frame
- *     to fill the bitmap. Source frames are 16:9; Hero at desktop is roughly
- *     16:9-ish. Aspect mismatch at extreme aspect ratios is hidden by the mask.
+ * Canvas bitmap is sized to devicePixelRatio × CSS dimensions for retina
+ * crispness, re-fit on every container resize. Once the parent flips
+ * `firstAnimationComplete` (the LAST-targeting tween fired its onComplete),
+ * a looping `<video>` mounts over the canvas for the rest-state animation.
  */
 export function HeroCanvasScene({
   scrollYProgress,
@@ -85,16 +64,18 @@ export function HeroCanvasScene({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  // Stash the latest frame image so the ResizeObserver callback (whose effect
+  // doesn't depend on `seq.frameImage`) can redraw with the current frame.
+  const frameImageRef = useRef<HTMLImageElement | null>(null);
 
   const seq = useFrameSequence({
     totalFrames: TOTAL_FRAMES,
-    framePath: FRAME_PATH,
+    buildSrc: buildFramePath,
     scrollYProgress,
   });
 
-  // Resize the canvas bitmap to devicePixelRatio * cssDimensions whenever the
-  // container resizes. Re-draws the current frame after each resize so we
-  // don't see a one-frame blank.
+  // One-time setup: 2D context + ResizeObserver. Independent of frame changes
+  // so the observer isn't torn down/rebuilt on every scrub tick.
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -102,7 +83,7 @@ export function HeroCanvasScene({
     const container = containerRef.current;
     if (!canvas || !container) return;
 
-    const ctx = canvas.getContext("2d", { alpha: true });
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
     ctxRef.current = ctx;
 
@@ -121,12 +102,10 @@ export function HeroCanvasScene({
 
     const ro = new ResizeObserver(() => {
       applyDimensions();
-      const img = seq.frameImage;
-      const c = canvasRef.current;
-      const cx = ctxRef.current;
-      if (img && c && cx) {
-        cx.clearRect(0, 0, c.width, c.height);
-        drawCover(cx, img, c.width, c.height);
+      const img = frameImageRef.current;
+      if (img) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawCover(ctx, img, canvas.width, canvas.height);
       }
     });
     ro.observe(container);
@@ -135,10 +114,11 @@ export function HeroCanvasScene({
       ro.disconnect();
       ctxRef.current = null;
     };
-  }, [seq.frameImage]);
+  }, []);
 
   // Draw the current frame on each frameImage change.
   useEffect(() => {
+    frameImageRef.current = seq.frameImage;
     const canvas = canvasRef.current;
     const ctx = ctxRef.current;
     const img = seq.frameImage;
@@ -151,8 +131,7 @@ export function HeroCanvasScene({
     <div
       ref={containerRef}
       aria-hidden
-      // light:opacity-40 — same rationale as HeroStaticBackdrop in
-      // HeroScrollScene.tsx: dark source asset recedes against the warm
+      // light:opacity-40 — dark source asset recedes against the warm
       // off-white page bg on light theme so the dark text content can read.
       className="absolute inset-0 pointer-events-none light:opacity-40"
       style={{
@@ -163,12 +142,10 @@ export function HeroCanvasScene({
       <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
       {firstAnimationComplete && (
         // Continuous-loop swap-in. Mounted ONLY after the LAST-targeting
-        // tween's `onComplete` has fired in HeroScrollLocked — so the
-        // canvas has fully settled at frame 0180 before this video appears
+        // tween's `onComplete` has fired in HeroScrollLocked — so the canvas
+        // has fully settled at the final frame before this video appears
         // over it. autoPlay requires muted + playsInline per browser policy.
-        // The parent wrapper carries the INWARD_MASK + light:opacity-40,
-        // so this element inherits the masking and dimming for free.
-        // Decorative — aria-hidden + no audio track, so no caption needed.
+        // Inherits masking + dimming from the parent wrapper.
         <video
           src="/hero-continuous.mp4"
           autoPlay

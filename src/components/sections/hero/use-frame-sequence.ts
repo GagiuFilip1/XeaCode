@@ -1,91 +1,39 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMotionValueEvent, type MotionValue } from "framer-motion";
 
 /**
- * use-frame-sequence — preload + scroll-progress-to-frame-index mapping for the
- * Hero scroll-scrubbed canvas scene.
+ * Preloads a WebP frame sequence and maps a MotionValue<number> in [0, 1] to
+ * the corresponding HTMLImageElement (clamped + rounded to nearest). The
+ * parent drives the MotionValue — this hook does not call `useScroll`.
  *
- * Phase 6 v3 (checkpoint mode): the parent (`HeroScrollLocked`) drives the
- * passed MotionValue directly via Framer `animate()` between discrete
- * checkpoint progress values (0 / 0.16 / 0.33 / 0.50 / 0.66 / 0.83 / 1.00).
- * Wheel events are intercepted; one input = one segment tween over ~700ms.
- * The hook itself is unchanged from Phase 5 — a MotionValue is a MotionValue,
- * whether it's spring-smoothed scroll progress, raw scroll progress, or an
- * `animate()`-driven progress between discrete checkpoints.
+ * Loading strategy: eager-load the first ~25% of frames, then progressively
+ * load the rest via `requestIdleCallback` in batches of 10 (setTimeout 100ms
+ * fallback for Safari). If a desired frame hasn't decoded yet, the nearest-
+ * loaded neighbour is returned instead (alternating outward search).
  *
- * Phase 6 v2 (deprecated): `scrollYProgress` was spring-smoothed via
- * `useSmoothedProgress`. Removed in v3 because the spring tail felt laggy.
- *
- * Phase 5 signature: the hook no longer owns `useScroll`. It takes a
- * `scrollYProgress: MotionValue<number>` and subscribes via
- * `useMotionValueEvent`. The parent component owns the single source of
- * truth that maps user input to canvas frame index.
- *
- * Inputs:
- *   - totalFrames:    how many frames in the sequence (Phase 6: 180).
- *   - framePath:      printf-style path with {{index}} placeholder, e.g.
- *                     "/hero-frames/{{index}}.webp". Indexes are 1-based,
- *                     4-digit zero-padded ("0001"..."0180").
- *   - scrollYProgress: MotionValue<number> in [0..1] driving the frame
- *                     selection. Passed in from the parent — the hook does
- *                     NOT call `useScroll` itself.
- *
- * Outputs:
- *   - frameImage:  the currently-selected HTMLImageElement, or null until
- *                  frame 0001 has loaded. The component draws it via
- *                  ctx.drawImage(frameImage, ...).
- *   - ready:       true once frame 0001 has loaded — component can draw.
- *   - loadedCount: count of frames already in the browser cache.
- *
- * Behaviour:
- *   1. On mount, build a `HTMLImageElement[]` of length `totalFrames`, set
- *      `.src` on each. Eager preload the first 30; progressively preload the
- *      rest in batches of 10 via `requestIdleCallback` (100ms setTimeout
- *      fallback for Safari).
- *   2. Subscribe to `scrollYProgress` via `useMotionValueEvent`. Each change
- *      maps `progress in [0, 1]` to `index = round(progress * (totalFrames - 1))`,
- *      clamped to [0, totalFrames - 1]. If that frame's Image has loaded, set
- *      `frameImage` to it; if not, fall back to the nearest loaded frame
- *      (alternating outward search).
- *   3. On unmount, clear every Image's `.src` to release the reference and
- *      allow GC. Cancel any pending `requestIdleCallback`.
- *
- * SSR-safe: every browser-only thing (`new Image()`, `requestIdleCallback`,
- * `window`) is guarded behind `useEffect` (post-mount only).
+ * SSR-safe: every browser-only call is guarded behind `useEffect`.
  */
 export function useFrameSequence({
   totalFrames,
-  framePath,
+  buildSrc,
   scrollYProgress,
 }: {
   totalFrames: number;
-  framePath: string;
+  buildSrc: (oneBasedIndex: number) => string;
   scrollYProgress: MotionValue<number>;
 }): {
   frameImage: HTMLImageElement | null;
   ready: boolean;
-  loadedCount: number;
 } {
   const imagesRef = useRef<HTMLImageElement[]>([]);
   const loadedRef = useRef<boolean[]>([]);
   const idleHandlesRef = useRef<number[]>([]);
+  // Last index pushed into `setFrameImage` — guards the per-tick no-op path.
+  const lastIndexRef = useRef(-1);
 
   const [frameImage, setFrameImage] = useState<HTMLImageElement | null>(null);
-  const [ready, setReady] = useState(false);
-  const [loadedCount, setLoadedCount] = useState(0);
-
-  // Resolved path for a 1-based index, zero-padded to 4 digits.
-  const buildSrc = useMemo(
-    () =>
-      (index1based: number) =>
-        framePath.replace(
-          "{{index}}",
-          String(index1based).padStart(4, "0"),
-        ),
-    [framePath],
-  );
 
   // Find the nearest-loaded frame index given a desired index. Search outward
   // alternating +/- 1, +/- 2, ... up to the array bounds.
@@ -113,15 +61,32 @@ export function useFrameSequence({
 
     let cancelled = false;
     const handles: number[] = [];
-    let cleanupSchedule: ((handle: number) => void) | null = null;
+
+    // requestIdleCallback polyfill resolved once per effect (not once per batch).
+    const schedule: (cb: IdleRequestCallback) => number =
+      typeof window.requestIdleCallback === "function"
+        ? window.requestIdleCallback.bind(window)
+        : (cb) =>
+            window.setTimeout(
+              () =>
+                cb({
+                  didTimeout: false,
+                  timeRemaining: () => 50,
+                } as IdleDeadline),
+              100,
+            );
+    const cancel: (handle: number) => void =
+      typeof window.cancelIdleCallback === "function"
+        ? window.cancelIdleCallback.bind(window)
+        : (h) => window.clearTimeout(h);
 
     const markLoaded = (i: number) => {
       if (cancelled) return;
       loadedFlags[i] = true;
-      setLoadedCount((n) => n + 1);
-      // The very first frame's load flips `ready` + sets initial frameImage.
+      // The very first frame's load sets the initial frameImage so the canvas
+      // can render. `ready` is derived from `frameImage !== null` in the return.
       if (i === 0) {
-        setReady(true);
+        lastIndexRef.current = 0;
         setFrameImage(images[0]);
       }
     };
@@ -132,8 +97,8 @@ export function useFrameSequence({
       img.decoding = "async";
       img.onload = () => markLoaded(i);
       img.onerror = () => {
-        // Treat error as "this frame won't load" — leave loadedFlags[i] = false.
-        // Adjacent frames cover for it via findNearestLoaded.
+        // Treat error as "this frame won't load" — adjacent frames cover for
+        // it via findNearestLoaded.
         console.warn(
           `[useFrameSequence] frame ${i + 1} failed to load: ${img.src}`,
         );
@@ -142,8 +107,7 @@ export function useFrameSequence({
       images[i] = img;
     };
 
-    // Eager: first 45 frames (start-of-scroll viewport — user lands here).
-    // Phase 6 bumped from 30 to 45 proportionally with totalFrames 120 -> 180.
+    // Eager: first ~25% of frames (start-of-scroll viewport — user lands here).
     const EAGER_COUNT = Math.min(45, totalFrames);
     for (let i = 0; i < EAGER_COUNT; i++) startLoad(i);
 
@@ -151,41 +115,20 @@ export function useFrameSequence({
     const BATCH = 10;
     const queueBatch = (start: number) => {
       if (cancelled || start >= totalFrames) return;
-      const schedule =
-        typeof window.requestIdleCallback === "function"
-          ? window.requestIdleCallback
-          : (cb: IdleRequestCallback) =>
-              window.setTimeout(
-                () =>
-                  cb({
-                    didTimeout: false,
-                    timeRemaining: () => 50,
-                  } as IdleDeadline),
-                100,
-              ) as unknown as number;
-      const cancel =
-        typeof window.cancelIdleCallback === "function"
-          ? window.cancelIdleCallback
-          : (h: number) => window.clearTimeout(h);
-
       const handle = schedule(() => {
         if (cancelled) return;
         const end = Math.min(start + BATCH, totalFrames);
         for (let i = start; i < end; i++) startLoad(i);
         queueBatch(end);
       });
-      handles.push(handle as unknown as number);
+      handles.push(handle);
       idleHandlesRef.current = handles;
-      cleanupSchedule = cancel;
     };
     queueBatch(EAGER_COUNT);
 
     return () => {
       cancelled = true;
-      // Cancel any pending idle callbacks.
-      if (cleanupSchedule) {
-        for (const h of handles) cleanupSchedule(h);
-      }
+      for (const h of handles) cancel(h);
       // Release Image references — clearing src cancels any in-flight network
       // fetch and lets the GC reclaim memory.
       for (const img of images) {
@@ -198,20 +141,25 @@ export function useFrameSequence({
       imagesRef.current = [];
       loadedRef.current = [];
       idleHandlesRef.current = [];
+      lastIndexRef.current = -1;
     };
   }, [totalFrames, buildSrc]);
 
   // Subscribe to the externally-provided scroll progress. The parent owns the
-  // single `useScroll({ target, offset })` call; this hook is a pure consumer.
+  // single source of truth that maps user input to canvas frame index.
   useMotionValueEvent(scrollYProgress, "change", (progress) => {
     if (!loadedRef.current.length) return;
     const clamped = Math.min(1, Math.max(0, progress));
     const desired = Math.round(clamped * (totalFrames - 1));
+    // No-op guard: Framer's `animate()` emits per RAF (~60 Hz). Many emits land
+    // on the same frame index — skip the array walk + state update for those.
+    if (desired === lastIndexRef.current) return;
     const idx = findNearestLoaded(desired);
     if (idx === null) return;
+    lastIndexRef.current = idx;
     const img = imagesRef.current[idx];
     if (img) setFrameImage(img);
   });
 
-  return { frameImage, ready, loadedCount };
+  return { frameImage, ready: frameImage !== null };
 }

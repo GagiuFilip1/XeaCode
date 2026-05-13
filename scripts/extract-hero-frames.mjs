@@ -100,7 +100,7 @@ if (probe.status !== 0) {
 let probeData;
 try {
   probeData = JSON.parse(probe.stdout);
-} catch (e) {
+} catch {
   console.error("[extract-frames] ffprobe output not valid JSON:");
   console.error(probe.stdout);
   process.exit(1);

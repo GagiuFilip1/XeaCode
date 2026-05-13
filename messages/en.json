@@ -106,7 +106,9 @@
     "title": "A focused toolbox.",
     "subtitle": "We pick tools that will still be sensible in five years. The list below is intentionally short — we use it deeply, not broadly.",
     "breadcrumb": "BACKEND · FRONTEND · MOBILE · INFRA · OBSERVABILITY",
-    "scopeNote": "We have opinions about microservices (mostly: don't, yet), about ORMs (yes, with care), and about feature flags (always). Ask us, on a call."
+    "scopeNote": "We have opinions about microservices (mostly: don't, yet), about ORMs (yes, with care), and about feature flags (always). Ask us, on a call.",
+    "marqueePrimaryRowLabel": "Tools we use, primary row",
+    "marqueeSecondaryRowLabel": "Tools we use, secondary row"
   },
   "team": {
     "eyebrow": "05 — WHO WE ARE",

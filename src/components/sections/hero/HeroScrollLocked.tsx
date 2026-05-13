@@ -1,7 +1,20 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { motion, useMotionValue, animate } from "framer-motion";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
+import {
+  motion,
+  useMotionValue,
+  animate,
+  type Transition,
+  type MotionProps,
+} from "framer-motion";
 import { useTranslations } from "next-intl";
 import { HeroBackdrop } from "./HeroBackdrop";
 import { HeroHeadline } from "./HeroHeadline";
@@ -10,97 +23,107 @@ import { HeroDiscoverButton } from "./HeroDiscoverButton";
 import { usePrefersReducedMotion } from "@/lib/motion";
 
 /**
- * HeroScrollLocked — checkpoint-state scroll mode (Phase 6 v3).
+ * Scroll-locked Hero — a discrete checkpoint state machine.
  *
- * Previous iterations mapped continuous scroll position to a canvas frame
- * index via `useScroll` + `useSpring` smoothing. The user found the
- * continuous mode felt laggy on slow scroll and slowed too much at scroll-
- * stop — the spring tail kept advancing the canvas after the user expected
- * it to settle.
+ * Seven checkpoints in canvas-progress space (0 / 0.16 / 0.33 / 0.50 / 0.66 /
+ * 0.83 / 1.00) map to frames in the 180-frame sequence. One wheel input
+ * advances or retreats the checkpoint by exactly 1; a Framer `animate()`
+ * tween drives `frameProgress` linearly over SEGMENT_DURATION. Tweens CHAIN:
+ * an arriving wheel mid-tween stops the in-flight `animate()` and starts a
+ * new one from the current value toward the next checkpoint, so continuous
+ * scrolling produces continuous animation in either direction.
  *
- * This iteration replaces continuous scrubbing with a **discrete checkpoint
- * state machine**:
+ * The lock releases at LAST_CHECKPOINT (one-way — wheel-up at the final
+ * checkpoint scrolls natively, no reverse) but only after the final tween's
+ * `onComplete` has fired — until then wheel events are swallowed so the user
+ * can't reach Services while the canvas is still settling, and so the loop
+ * video (gated on the same flag) doesn't appear over a mid-tween canvas.
+ * At checkpoint 0, wheel-up releases the lock too (we're already at scrollY=0).
  *
- *   - Seven checkpoints in canvas-progress space: 0 / 0.16 / 0.33 / 0.50 /
- *     0.66 / 0.83 / 1.00. Each maps to a frame in the 180-frame sequence
- *     (roughly 0 / 30 / 60 / 90 / 120 / 150 / 179).
- *   - One scroll input (wheel down / wheel up) advances or retreats the
- *     checkpoint by exactly 1. A Framer `animate()` tween drives the
- *     `frameProgress` MotionValue from current → target over 1500ms with a
- *     linear ease (matches the source video's 24 fps × 30 frames-per-segment
- *     constant-velocity pacing).
- *   - Tweens CHAIN: if a wheel arrives mid-tween, the in-flight `animate()` is
- *     stopped (preserving its current `frameProgress` value) and a new tween
- *     starts from there toward the next checkpoint. Continuous scrolling
- *     therefore produces a continuous animation in either direction — there
- *     is no per-segment rate-limit.
- *   - At checkpoint 6 (last), **any** wheel direction releases the lock —
- *     the animation is one-way once played. Wheel down moves the page to
- *     Services; wheel up just scrolls natively without reversing checkpoints.
- *   - At checkpoint 0 scrolling up → release scroll lock. Native wheel
- *     scrolls the page to top.
- *   - Text reveals are keyed off the checkpoint index (boolean per element),
- *     not off scroll progress. This is cheaper than the threshold-MotionValue
- *     pattern from the previous iteration.
+ * Refs back the checkpoint + first-animation-complete flags because the
+ * wheel handler reads them inside a `useEffect` and capturing the state
+ * values directly would either go stale or force re-binding on every tick.
+ * The state mirrors drive the reveal booleans.
  *
- * Architecture:
- *   - Single `min-h-[100dvh]` section. No 500vh budget, no sticky positioning,
- *     no useScroll.
- *   - A `wheel` listener on `window` (passive: false so we can preventDefault).
- *   - The handler intercepts events while the user has not yet scrolled past
- *     the section's top edge (`rect.top >= 0`). The <Header> is sticky and
- *     ~64px tall, so at scrollY=0 `rect.top === 64`, NOT 0 — that's why the
- *     trigger is "not past the top" rather than "fully covering viewport."
- *   - When the user scrolls out (because we released at an extreme), `rect.top`
- *     goes negative and the handler stops intercepting; native scroll resumes.
- *
- * Reduced-motion: instant snap (~0.0001s tween, effectively a jump).
+ * Reduced-motion: tweens become effectively instant (REDUCED_MOTION_DURATION).
  * Mobile / coarse-pointer: never reaches this component — `HeroContent`
  * routes those users to `HeroStatic`.
- *
- * Keyboard / arrow-key scrolling: not intercepted. Keyboard users page past
- * the Hero naturally (the animation is decorative; reveal content is still
- * accessible because the next section's content is independently keyed).
- * The Discover button is the explicit keyboard-friendly "skip ahead"
- * affordance and is `<button>`-tabbable.
  */
 
-// Canvas-progress targets per checkpoint. Index 0 = initial state.
 const CHECKPOINTS = [0, 0.16, 0.33, 0.5, 0.66, 0.83, 1.0] as const;
 const NUM_CHECKPOINTS = CHECKPOINTS.length;
 const LAST_CHECKPOINT = NUM_CHECKPOINTS - 1;
 
-// Tween durations.
-// One wheel input → one segment. Matches the source video pacing
-// (motions/final.mp4 is 24 fps × 30 frames per segment ≈ 1.25 s), plus a
-// touch of breathing room for the ease-out tail so each segment "feels"
-// like it plays at the original-video speed.
+// One wheel input → one segment. Source video plays at 24 fps × 30 frames
+// per segment ≈ 1.25 s; the slight extension gives the ease-out tail room
+// so each segment "feels" like it plays at the original-video speed.
 const SEGMENT_DURATION = 1.5; // seconds
-const SKIP_TO_END_DURATION = 0.5; // seconds — Discover-button fast-forward
+const SKIP_TO_END_DURATION = 0.5; // Discover-button fast-forward
 const REDUCED_MOTION_DURATION = 0.0001; // effectively instant
+
+const REVEAL_HIDDEN = { opacity: 0, y: 20 } as const;
+const REVEAL_VISIBLE = { opacity: 1, y: 0 } as const;
+const REVEAL_EASE = [0.22, 1, 0.36, 1] as const;
+const REVEAL_DURATION = 0.45;
+
+type RevealTag = "span" | "p" | "div";
+
+function Reveal({
+  as,
+  show,
+  transition,
+  className,
+  style,
+  children,
+}: {
+  as: RevealTag;
+  show: boolean;
+  transition: Transition;
+  className?: string;
+  style?: CSSProperties;
+  children: ReactNode;
+}) {
+  const motionProps: MotionProps = {
+    initial: REVEAL_HIDDEN,
+    animate: show ? REVEAL_VISIBLE : REVEAL_HIDDEN,
+    transition,
+  };
+  if (as === "span")
+    return (
+      <motion.span {...motionProps} className={className} style={style}>
+        {children}
+      </motion.span>
+    );
+  if (as === "p")
+    return (
+      <motion.p {...motionProps} className={className} style={style}>
+        {children}
+      </motion.p>
+    );
+  return (
+    <motion.div {...motionProps} className={className} style={style}>
+      {children}
+    </motion.div>
+  );
+}
 
 export function HeroScrollLocked() {
   const t = useTranslations("hero");
   const reduced = usePrefersReducedMotion();
 
   const sectionRef = useRef<HTMLDivElement | null>(null);
-  // Canonical checkpoint for the handler (avoids stale closures from useState).
+  // Refs back the wheel handler (read inside useEffect — state values would
+  // go stale); state mirrors drive the reveal booleans.
   const checkpointRef = useRef(0);
-  // Reflect the same value in React state so derived rendering (reveals)
-  // updates. Handler always reads from ref, then mirrors to state.
   const [checkpoint, setCheckpoint] = useState(0);
 
   // Flips true only when an `animate()` targeting LAST_CHECKPOINT completes
-  // its tween (i.e. the canvas actually reached progress=1.0). Until then,
-  // the loop video stays unmounted AND the wheel handler holds the scroll
-  // lock — so the user can't scroll to Services and the video can't start
-  // playing on top of a mid-tween canvas. Ref is read by the wheel handler
-  // (avoids stale closures); state drives the render that mounts the video.
+  // its tween uninterrupted. Until then the wheel handler holds the lock
+  // AND the loop video stays unmounted — so the user can't scroll to
+  // Services and the video can't start playing over a mid-tween canvas.
   const firstAnimationCompleteRef = useRef(false);
   const [firstAnimationComplete, setFirstAnimationComplete] = useState(false);
 
-  // Canvas frame index is `floor(frameProgress * 179)`. Framer `animate()`
-  // tweens this between CHECKPOINTS[i] values on each segment transition.
   const frameProgress = useMotionValue(0);
   // Handle to the active animation so we can cancel mid-flight on
   // skip-to-end (Discover button) or unmount.
@@ -117,18 +140,13 @@ export function HeroScrollLocked() {
       setCheckpoint(clamped);
       activeAnimRef.current = animate(frameProgress, CHECKPOINTS[clamped], {
         duration: reduced ? REDUCED_MOTION_DURATION : duration,
-        // Linear ease for video-like constant-velocity playback. An ease-out
-        // curve would front-load the motion (90 %+ of frame change in the
-        // first 50 % of duration), making the animation feel faster than
-        // SEGMENT_DURATION suggests. Source video plays at constant 24 fps —
-        // linear matches that pacing.
+        // Linear ease for video-like constant-velocity playback. Source video
+        // plays at constant 24 fps — linear matches that pacing.
         ease: "linear",
         onComplete: () => {
           activeAnimRef.current = null;
-          // Only the tween that actually reaches LAST_CHECKPOINT and isn't
-          // interrupted gets here — `.stop()` (called from this same
-          // function when a new wheel arrives) does NOT fire onComplete.
-          // So this is the canonical "first animation truly finished" event.
+          // Only an uninterrupted tween that actually reached LAST_CHECKPOINT
+          // gets here — `.stop()` does NOT fire onComplete.
           if (clamped >= LAST_CHECKPOINT) {
             firstAnimationCompleteRef.current = true;
             setFirstAnimationComplete(true);
@@ -140,9 +158,6 @@ export function HeroScrollLocked() {
   );
 
   // Discover-button callback: jump to last checkpoint with a faster tween.
-  // The button's own click handler then rAF-tweens scroll to #services in
-  // parallel — the canvas catches up to its final frame while the page
-  // scrolls.
   const skipToEnd = useCallback(() => {
     goToCheckpoint(LAST_CHECKPOINT, SKIP_TO_END_DURATION);
   }, [goToCheckpoint]);
@@ -154,34 +169,29 @@ export function HeroScrollLocked() {
 
       const rect = section.getBoundingClientRect();
       // Wheel-lock engages while the user has not yet scrolled past the
-      // section's top edge. The <Header> is sticky (h-16, ~64px), so at
-      // scrollY=0 the section's rect.top equals header height — NOT 0.
-      // Using `rect.top >= 0` covers both the initial "page is at top" state
-      // AND the moment the section is pinned flush against the viewport top.
+      // section's top edge. The <Header> is sticky (~64px), so at scrollY=0
+      // rect.top equals header height — NOT 0. Using `rect.top >= 0` covers
+      // both "page at top" and "section pinned flush against viewport top".
       // Once rect.top < 0 the user has scrolled past the Hero and native
-      // scroll must resume so they can move freely through the page.
+      // scroll must resume.
       if (rect.top < 0) return;
 
       const direction = e.deltaY > 0 ? 1 : -1;
       const current = checkpointRef.current;
 
-      // At LAST_CHECKPOINT, the lock releases (any direction → native scroll)
-      // ONLY after the first animation has truly finished — the tween
-      // targeting LAST fired its `onComplete` and flipped
-      // firstAnimationCompleteRef. Until that moment, wheel events are
-      // swallowed (preventDefault, no advance, no native scroll) so the user
-      // can't reach Services while the canvas is still settling, and so the
-      // loop video — gated on the same flag — doesn't appear over a mid-tween
-      // canvas. The lock-in is still one-way (no reverse from LAST) because
-      // when input is accepted again, native scroll handles both directions.
+      // At LAST_CHECKPOINT the lock releases (any direction → native scroll)
+      // ONLY after the first animation has truly finished. Until then,
+      // wheel events are swallowed so the user can't reach Services while
+      // the canvas is settling. Lock-in is one-way (no reverse from LAST)
+      // because when input is accepted again native scroll handles both
+      // directions.
       if (current >= LAST_CHECKPOINT) {
-        if (firstAnimationCompleteRef.current) return; // tween done → native scroll
-        e.preventDefault(); // tween in flight → hold lock
+        if (firstAnimationCompleteRef.current) return;
+        e.preventDefault();
         return;
       }
 
-      // Wheel-up at the very start — native scroll no-ops (we're already at
-      // scrollY=0). Let it through.
+      // Wheel-up at the very start — native scroll no-ops anyway. Let it through.
       if (direction < 0 && current <= 0) return;
 
       e.preventDefault();
@@ -191,7 +201,6 @@ export function HeroScrollLocked() {
     window.addEventListener("wheel", handleWheel, { passive: false });
     return () => {
       window.removeEventListener("wheel", handleWheel);
-      // Cancel any in-flight tween on unmount.
       if (activeAnimRef.current) {
         activeAnimRef.current.stop();
         activeAnimRef.current = null;
@@ -210,9 +219,9 @@ export function HeroScrollLocked() {
     ctas: checkpoint >= 6,
   };
 
-  const revealTransition = {
-    duration: reduced ? REDUCED_MOTION_DURATION : 0.45,
-    ease: [0.22, 1, 0.36, 1] as const,
+  const revealTransition: Transition = {
+    duration: reduced ? REDUCED_MOTION_DURATION : REVEAL_DURATION,
+    ease: REVEAL_EASE,
   };
 
   return (
@@ -228,16 +237,14 @@ export function HeroScrollLocked() {
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 2xl:max-w-none 2xl:mx-0 2xl:px-[8vw] h-[100dvh] flex flex-col justify-center">
         <div className="grid grid-cols-1 min-[980px]:grid-cols-[minmax(0,58%)_1fr] gap-10 min-[980px]:gap-16 items-center">
           <div className="flex flex-col gap-6 md:gap-8">
-            <motion.span
-              initial={{ opacity: 0, y: 20 }}
-              animate={
-                reveals.eyebrow ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }
-              }
+            <Reveal
+              as="span"
+              show={reveals.eyebrow}
               transition={revealTransition}
               className="text-[10px] font-mono uppercase tracking-[0.28em] text-accent"
             >
               {t("eyebrow")}
-            </motion.span>
+            </Reveal>
             <HeroHeadline text={t("headline")} />
             <HeroDiscoverButton
               onSkipToEnd={skipToEnd}
@@ -254,53 +261,41 @@ export function HeroScrollLocked() {
               before:pointer-events-none before:-z-10
             "
           >
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={
-                reveals.lead ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }
-              }
+            <Reveal
+              as="p"
+              show={reveals.lead}
               transition={revealTransition}
               className="max-w-[55ch] text-base md:text-lg leading-relaxed text-fg-muted"
             >
               {t("subtitle")}
-            </motion.p>
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={
-                reveals.capability
-                  ? { opacity: 1, y: 0 }
-                  : { opacity: 0, y: 20 }
-              }
+            </Reveal>
+            <Reveal
+              as="p"
+              show={reveals.capability}
               transition={revealTransition}
               className="text-[10px] font-mono uppercase tracking-[0.28em] text-fg-subtle max-w-[55ch]"
             >
               {t("capabilities")}
-            </motion.p>
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={
-                reveals.trust ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }
-              }
+            </Reveal>
+            <Reveal
+              as="p"
+              show={reveals.trust}
               transition={revealTransition}
               className="text-[10px] font-mono uppercase tracking-[0.28em] text-fg-subtle max-w-[60ch]"
             >
               {t("trustStrip")}
-            </motion.p>
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={
-                reveals.quality ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }
-              }
+            </Reveal>
+            <Reveal
+              as="p"
+              show={reveals.quality}
               transition={revealTransition}
               className="text-sm md:text-base text-fg-muted max-w-[50ch]"
             >
               {t("qualityMarker")}
-            </motion.p>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={
-                reveals.ctas ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }
-              }
+            </Reveal>
+            <Reveal
+              as="div"
+              show={reveals.ctas}
               transition={revealTransition}
               style={{ pointerEvents: reveals.ctas ? "auto" : "none" }}
               className="mt-2 flex flex-col sm:flex-row gap-3"
@@ -311,7 +306,7 @@ export function HeroScrollLocked() {
               <HeroCTA href="#work" variant="secondary">
                 {t("ctaSecondary")}
               </HeroCTA>
-            </motion.div>
+            </Reveal>
           </div>
         </div>
       </div>

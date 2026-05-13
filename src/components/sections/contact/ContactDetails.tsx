@@ -58,13 +58,9 @@ function Row({
 }) {
   const inner = (
     <>
-      <span
-        className={
-          href
-            ? "text-fg-muted group-hover:text-accent transition-colors"
-            : "text-fg-muted"
-        }
-      >
+      {/* group-hover is inert without a `group` ancestor (non-link path uses
+          a plain <div>), so this className works for both branches. */}
+      <span className="text-fg-muted group-hover:text-accent transition-colors">
         {icon}
       </span>
       <span>{text}</span>

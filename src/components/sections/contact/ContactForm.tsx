@@ -130,7 +130,7 @@ export function ContactForm() {
   // ---- Render ----
 
   if (status.kind === "success") {
-    return <ContactSuccess id={status.id} />;
+    return <ContactSuccess />;
   }
 
   return (

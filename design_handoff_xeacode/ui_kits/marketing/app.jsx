@@ -248,7 +248,7 @@ function Marquee() {
           <div className="marquee-track marquee-left">{half.map((t,i) => <div className="tile" key={'a'+i}>{t}</div>)}</div>
           <div className="marquee-track marquee-right">{half.slice().reverse().map((t,i) => <div className="tile" key={'b'+i}>{t}</div>)}</div>
         </div>
-        <Reveal as="p" className="scope-note p">We have opinions about microservices (mostly: don't, yet), about ORMs (yes, with care), and about feature flags (always). Ask us, on a call.</Reveal>
+        <Reveal as="p" className="scope-note p">We have opinions about microservices (mostly: don&apos;t, yet), about ORMs (yes, with care), and about feature flags (always). Ask us, on a call.</Reveal>
       </div>
     </section>
   );

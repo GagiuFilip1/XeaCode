@@ -26,16 +26,13 @@ import { cn } from "@/lib/cn";
 export function Marquee({
   tiles,
   direction,
+  ariaLabel,
 }: {
   tiles: readonly string[];
   direction: "left" | "right";
+  ariaLabel: string;
 }) {
   const reduced = usePrefersReducedMotion();
-
-  const ariaLabel =
-    direction === "left"
-      ? "Tools we use, primary row"
-      : "Tools we use, secondary row";
 
   const tileClass = cn(
     "shrink-0 inline-flex items-center justify-center",

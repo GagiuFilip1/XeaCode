@@ -13,13 +13,7 @@ import { spring, usePrefersReducedMotion } from "@/lib/motion";
  * Per design: no Ref caption. Card chrome (rounded-2xl border bg-elevated)
  * stays; the check-circle badge stays.
  */
-export function ContactSuccess({ id }: { id: string }) {
-  // `id` is retained in the prop signature so the call site
-  // (`<ContactSuccess id={status.id} />`) keeps its existing typing,
-  // but per design handoff the Ref caption is removed and the value
-  // is intentionally not rendered. The void-discard below satisfies
-  // the no-unused-vars rule without renaming the prop.
-  void id;
+export function ContactSuccess() {
   const t = useTranslations("contact.form");
   const reduced = usePrefersReducedMotion();
 

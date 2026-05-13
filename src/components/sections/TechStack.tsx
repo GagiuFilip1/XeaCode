@@ -52,8 +52,16 @@ export function TechStack() {
               "linear-gradient(to right, transparent 0%, black 6%, black 94%, transparent 100%)",
           }}
         >
-          <Marquee tiles={STACK_TILES} direction="left" />
-          <Marquee tiles={[...STACK_TILES].reverse()} direction="right" />
+          <Marquee
+            tiles={STACK_TILES}
+            direction="left"
+            ariaLabel={t("marqueePrimaryRowLabel")}
+          />
+          <Marquee
+            tiles={[...STACK_TILES].reverse()}
+            direction="right"
+            ariaLabel={t("marqueeSecondaryRowLabel")}
+          />
         </div>
 
         {/* Scope-note line — rendered OUTSIDE the masked container so the
